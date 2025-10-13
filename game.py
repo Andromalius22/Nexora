@@ -1,12 +1,26 @@
 import pygame
 import sys
-import config
+from config import *
+from camera import *
+from player import *
+from map import *
+from assetsmanager import *
 
 class Game:
     def __init__(self):
         pygame.init()
         self.screen = pygame.display.set_mode((800, 600))
         pygame.display.set_caption("Nexora")
+        self.running = True
+        self.clock = pygame.time.Clock()
+        self.redraw_tiles = True
+        self.frame_count = 0
+        self.player = Player()
+        self.map = GalaxyMap(MAP_WIDTH, HEIGHT)
+        self.camera = Camera(screen_width=MAP_WIDTH, screen_height=SCREEN_HEIGHT, world_width=self.map.width, world_height=self.map.height)
+        self.assets = AssetsManager()
+        self.tile_layer_surface = pygame.Surface((WIDTH, HEIGHT))
+        self.state = 'MAIN_MENU'
 
     def run(self):
         while self.running:
@@ -19,6 +33,12 @@ class Game:
         for event in pygame.event.get():
             if event.type == pygame.QUIT:
                 self.running = False
+        
+        keys = pygame.key.get_pressed()
+        if self.camera.move(keys):
+            self.redraw_tiles = True
+        if keys[pygame.K_ESCAPE]:
+            self.running = False
 
     def update(self, time_delta):
         pass

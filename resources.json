@@ -1,0 +1,142 @@
+{
+    "Basaltic Ore": {
+        "resource_icon": "assets/resources/basaltic_ore.png",
+        "resource_type": "ore",
+        "description": "Raw planetary crust metals (iron, nickel, copper).",
+        "tier": 1,
+        "base_price": 10
+    },
+    "Ferrovite Alloy": {
+        "resource_icon": "assets/resources/Ferrovite_alloy.png",
+        "resource_type": "ore",
+        "description": "Smelted composite metal — strong, cheap, abundant.",
+        "tier": 2,
+        "base_price": 30
+    },
+    "Crytallite": {
+        "resource_icon": "assets/resources/Crtallite.png",
+        "resource_type": "ore",
+        "description": "Metallic crystal lattice grown under pressure; high conductivity.",
+        "tier": 3,
+        "base_price": 70
+    },
+    "Neutron-Forged Plate": {
+        "resource_icon": "assets/resources/Neutron-Forged_plate.png",
+        "resource_type": "ore",
+        "description": "Hyper-dense metal alloy forged under intense neutron radiation; hard to machine",
+        "tier": 4,
+        "base_price": 150
+    },
+    "Gravitic Mesh": {
+        "resource_icon": "assets/resources/Gravitic_mesh.png",
+        "resource_type": "ore",
+        "description": "Forged from the remnants of a neutron star, and condensed into solid metal mesh; virtually indestructible. Metal infused with gravity-manipulative particles.",
+        "tier": 5,
+        "base_price": 300
+    },
+    "Singularium": {
+        "resource_icon": "assets/resources/Singularium.png",
+        "resource_type": "ore",
+        "description": "Forged from the remnants of a black hole, and condensed into solid metal mesh. Synthetic matter built from spacetime filaments.",
+        "tier": 6,
+        "base_price": 600
+    },
+    "Hydrolyte": {
+        "resource_icon": "assets/resources/Hydrolyte.png",
+        "resource_type": "liquid",
+        "description": "Water with a strange affinity for metals, making it useful for electrolysis.",
+        "tier": 1,
+        "base_price": 10
+    },
+    "Vaporite": {
+        "resource_icon": "assets/resources/Vaporite.png",
+        "resource_type": "liquid",
+        "description": "Water vaporized at extreme temperatures, compressed into a solid form.",
+        "tier": 2,
+        "base_price": 30
+    },
+    "Aqueous Nitrate": {
+        "resource_icon": "assets/resources/Aqueous_nitrate.png",
+        "resource_type": "liquid",
+        "description": "Water with a strange affinity for metals, making it useful for electrolysis.",
+        "tier": 3,
+        "base_price": 70
+    },
+    "Aquiferite": {
+        "resource_icon": "assets/resources/Aquiferite.png",
+        "resource_type": "liquid",
+        "description": "Water with a strange affinity for metals, making it useful for electrolysis.",
+        "tier": 4,
+        "base_price": 150
+    },
+    "Aqueous Sulfate": {
+        "resource_icon": "assets/resources/Aqueous_sulfate.png",
+        "resource_type": "liquid",
+        "description": "Water with a strange affinity for metals, making it useful for electrolysis.",
+        "tier": 5,
+        "base_price": 300
+    },
+    "Void Water": {
+        "resource_icon": "assets/resources/Void_water.png",
+        "resource_type": "liquid",
+        "description": "Water from a higher dimension, frozen in the vacuum of space.",
+        "tier": 6,
+        "base_price": 600
+    },
+    "Organifera": {
+        "resource_icon": "assets/resources/Organifera.png",
+        "resource_type": "organics",
+        "description": "Raw biological material: plants, microbes, proteins. Used for food, basic medicine, colonist upkeep.",
+        "tier": 1,
+        "base_price": 10
+    },
+    "Biopolymer": {
+        "resource_icon": "assets/resources/Biopolymer.png",
+        "resource_type": "organics",
+        "description": "Refined organic chains; flexible and durable. Used in construction materials, clothing, organics industry.",
+        "tier": 2,
+        "base_price": 30
+    },
+    "Symbiotic Culture": {
+        "resource_icon": "assets/resources/Symbiotic_culture.png",
+        "resource_type": "organics",
+        "description": "Engineered organisms functioning collectively. Used in Terraforming aids, biotech components.",
+        "tier": 3,
+        "base_price": 70
+    },
+    "Neural Biomass": {
+        "resource_icon": "assets/resources/Neural_biomass.png",
+        "resource_type": "organics",
+        "description": "Wetware capable of data processing. Used in AI cores, biological ships, psionic tech.",
+        "tier": 4,
+        "base_price": 150
+    },
+    "Edenic Genome" : {
+        "resource_icon": "assets/resources/Edenic_genome.png",
+        "resource_type": "organics",
+        "description": "Blueprint of perfected life; self-replicating. Used in Genetic terraforming, cloning.",
+        "tier": 5,
+        "base_price": 300
+    },
+    "Lifeflux Essence": {
+        "resource_icon": "assets/resources/Lifeflux_essence.png",
+        "resource_type": "organics",
+        "description": "Living energy form — part biomass, part psionic. Used in Ascension projects, god-like biology tech.",
+        "tier": 6,
+        "base_price": 600
+    },
+    "Volatite Gas": {
+        "resource_icon": "assets/resources/Volatite.png",
+        "resource_type": "gas",
+        "description": "Common planetary atmosphere gases (methane, CO₂, nitrogen). Used in Fuel, chemical industry, early power.",
+        "tier": 1,
+        "base_price": 10
+    },
+    "Ion Vapor": {
+        "resource_icon": "assets/resources/Ione.png",
+        "resource_type": "gas",
+        "description": "Electrically charged gas mix. Used in Propulsion, power generation.",
+        "tier": 2,
+        "base_price": 30
+    }
+}
