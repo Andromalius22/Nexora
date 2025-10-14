@@ -20,7 +20,13 @@ class Game:
         self.player = Player()
         self.map = GalaxyMap(MAP_WIDTH, HEIGHT)
         self.camera = Camera(screen_width=MAP_WIDTH, screen_height=SCREEN_HEIGHT, world_width=self.map.width, world_height=self.map.height)
+        with open("resources.json") as f:
+            resource_data = json.load(f)
         self.assets = AssetsManager()
+        self.assets.load_resource_icons(resource_data)
+        with open("refined.json") as f:
+            refined_data = json.load(f)
+        self.assets.load_resource_icons(refined_data)
         self.tile_layer_surface = pygame.Surface((WIDTH, HEIGHT))
         self.state = 'MAIN_MENU'
 

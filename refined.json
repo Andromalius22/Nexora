@@ -1,0 +1,138 @@
+{
+    "Ore bars":{
+        "resource_icon":"assets/refined/T1_BARS.png",
+        "refined_type":"bars",
+        "resources_needed":["Basaltic Ore"],
+        "description":"Basic minerals and metals extracted from asteroids or crusts.",
+        "tier":1,
+        "base_price":15
+    },
+    "Ferrovite Alloy":{
+        "resource_icon":"assets/refined/T2_BARS.png",
+        "refined_type":"bars",
+        "resources_needed":["Ferrovite"],
+        "description":"Smelted and purified metals suitable for construction. Smelted composite metal — strong, cheap, abundant.",
+        "tier":2,
+        "base_price":15
+    },
+    "Plasma Alloy":{
+        "resource_icon":"assets/refined/T3_BARS.png",
+        "refined_type":"bars",
+        "resources_needed":["Ferrovite Alloy", "Ion Vapor"],
+        "description":"Alloy infused with volatile gases for enhanced conductivity.",
+        "tier":3,
+        "base_price":15
+    },
+    "Nanosteel":{
+        "resource_icon":"assets/refined/T4_BARS.png",
+        "refined_type":"bars",
+        "resources_needed":["Plasma Alloy", "Crytallite"],
+        "description":"Self-repairing material built from nanoscale lattices.",
+        "tier":4,
+        "base_price":15
+    },
+    "Quantum Alloy":{
+        "resource_icon":"assets/refined/T5_BARS.png",
+        "refined_type":"bars",
+        "resources_needed":["Nanosteel", "Neutron-Forged Plate"],
+        "description":"Matter stabilized across quantum states — perfect for advanced hulls.",
+        "tier":5,
+        "base_price":15
+    },
+    "Stellarite":{
+        "resource_icon":"assets/refined/T6_BARS.png",
+        "refined_type":"bars",
+        "resources_needed":["Quantum Alloy", "Singularium"],
+        "description":"Legendary cosmic metal forged in artificial stars; used for Wonders.",
+        "tier":6,
+        "base_price":15
+    },
+    "Raw Biomass":{
+        "resource_icon":"assets/refined/T1_REFINED_BIOMASS.png",
+        "refined_type":"biomass",
+        "resources_needed":["Organifera"],
+        "description":"Processed organic material from flora, fauna, or microbial cultures. Can also be processed into gas",
+        "tier":1,
+        "base_price":15
+    },
+    "Nutrient Gel":{
+        "resource_icon":"assets/refined/T2_REFINED_BIOMASS.png",
+        "refined_type":"biomass",
+        "resources_needed":["Raw Biomass"],
+        "description":"Refined food substrate for colonies and growth vats.",
+        "tier":2,
+        "base_price":15
+    },
+    "Biopolymer":{
+        "resource_icon":"assets/refined/T3_REFINED_BIOMASS.png",
+        "refined_type":"biomass",
+        "resources_needed":["Organifera II"],
+        "description":"Refined organic chains; flexible and durable. Used in construction materials, clothing, organics industry.",
+        "tier":3,
+        "base_price":15
+    },
+    "BioCatalyst":{
+        "resource_icon":"assets/refined/T4_REFINED_BIOMASS.png",
+        "refined_type":"biomass",
+        "resources_needed":["Symbiotic Culture"],
+        "description":"Engineered enzyme networks that accelerate industrial or biological reactions.",
+        "tier":4,
+        "base_price":15
+    },
+    "Genetite":{
+        "resource_icon":"assets/refined/T5_REFINED_BIOMASS.png",
+        "refined_type":"biomass",
+        "resources_needed":["Edenic Genome"],
+        "description":"Adaptive genetic substrate — merges biological and synthetic design.",
+        "tier":5,
+        "base_price":15
+    },
+    "Living Essence":{
+        "resource_icon":"assets/refined/T6_REFINED_BIOMASS.png",
+        "refined_type":"biomass",
+        "resources_needed":["Lifeflux Essence", "Genetite"],
+        "description":"Adaptive genetic substrate — merges biological and synthetic design.",
+        "tier":6,
+        "base_price":15
+    },
+    "Refined Volatite":{
+        "resource_icon":"assets/refined/T1_REFINED_GAS.png",
+        "refined_type":"gas",
+        "resources_needed":["Volatite Gas"],
+        "description":"Used in Fuel, chemical industry, early power.",
+        "tier":1,
+        "base_price":15
+    },
+    "Ion Compound":{
+        "resource_icon":"assets/refined/T2_REFINED_GAS.png",
+        "refined_type":"gas",
+        "resources_needed":["Ion Vapor"],
+        "description":"Stabilized plasma fuel suitable for engines and generators.",
+        "tier":2,
+        "base_price":15
+    },
+    "Plasma Core":{
+        "resource_icon":"assets/refined/T3_REFINED_GAS.png",
+        "refined_type":"gas",
+        "resources_needed":["Plasma Condensate"],
+        "description":"High-energy containment unit derived from ionized gas and alloys.",
+        "tier":3,
+        "base_price":15
+    },
+    "Refined Quantum vapor":{
+        "resource_icon":"assets/refined/T4_REFINED_GAS.png",
+        "refined_type":"gas",
+        "resources_needed":["Quantum Vapor"],
+        "description":"Refined gas ready to be plugged into nanosteel matrice for a working cloaking hull.",
+        "tier":4,
+        "base_price":15
+    },
+    "Hyperfluid":{
+        "resource_icon":"assets/refined/T5_REFINED_GAS.png",
+        "refined_type":"gas",
+        "resources_needed":["Quantum Vapor"],
+        "description":"Refined gas ready to be plugged into nanosteel matrice for a working cloaking hull.",
+        "tier":5,
+        "base_price":15
+    }
+}

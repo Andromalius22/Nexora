@@ -1,9 +1,10 @@
 import pygame
 
 class Camera:
-    def __init__(self, screen_width, screen_height, world_width, world_height, speed=10):
+    def __init__(self, screen_width, screen_height, world_width, world_height, speed=20):
         self.offset = [0, 0]  # camera offset (x, y)
         self.speed = speed
+        self.turbo_speed = speed * 2
 
         self.screen_width = screen_width
         self.screen_height = screen_height
@@ -11,25 +12,30 @@ class Camera:
         self.world_height = world_height
 
     def move(self, keys):
+        old_offset = self.offset[:]
+        speed = self.turbo_speed if keys[pygame.K_LSHIFT] or keys[pygame.K_RSHIFT] else self.speed
+        moved = False
+        # WASD & diagonal support
         if keys[pygame.K_w]:
-            self.offset[1] += self.speed
-            return True
+            self.offset[1] += speed
+            moved = True
         if keys[pygame.K_s]:
-            self.offset[1] -= self.speed
-            return True
+            self.offset[1] -= speed
+            moved = True
         if keys[pygame.K_a]:
-            self.offset[0] += self.speed
-            return True
+            self.offset[0] += speed
+            moved = True
         if keys[pygame.K_d]:
-            self.offset[0] -= self.speed
-            return True
-
+            self.offset[0] -= speed
+            moved = True
         self.clamp()
+        return moved and (self.offset != old_offset)
 
     def clamp(self):
         # Prevent camera from moving beyond world boundaries
         #self.offset[0] = min(0, max(self.offset[0], self.screen_width - self.world_width))
         #self.offset[1] = min(0, max(self.offset[1], self.screen_height - self.world_height))
+        # Border checks currently disabled
         pass
 
         # max_x_offset = 0

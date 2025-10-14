@@ -1,2 +1,6 @@
 --TO DO--
 finish resouces.json
+make map movement more reactive
+rework the resources icons
+do refined icons
+finish refined items list

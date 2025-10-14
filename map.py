@@ -11,13 +11,13 @@ class Hex:
     def __repr__(self):
         return f"Hex(q={self.q}, r={self.r}, s={self.s})"
 
-    def hex_to_pixel(self, center, size):
-        x = size * math.sqrt(3) * (self.q + self.r/2) + center[0]
-        y = size * 3/2 * self.r + center[1]
+    def hex_to_pixel(self, center, size, cam_offset=(0,0)):
+        x = size * math.sqrt(3) * (self.q + self.r/2) + center[0] + cam_offset[0]
+        y = size * 3/2 * self.r + center[1] + cam_offset[1]
         return (x, y)
 
-    def polygon(self, center, size):
-        cx, cy = self.hex_to_pixel(center, size)
+    def polygon(self, center, size, cam_offset=(0,0)):
+        cx, cy = self.hex_to_pixel(center, size, cam_offset)
         points = []
         for i in range(6):
             angle = math.radians(60 * i - 30)
@@ -53,9 +53,11 @@ class GalaxyMap:
         return self.grid
 
     def draw(self, surface, center, assets, frame_count, player, camera):
+        cam_offset = camera.get_offset() if camera else (0,0)
+        print(f"[MAP] cam_offset {cam_offset}")
         # Draw borders for all hexes
         for hex in self.grid:
-            points = hex.polygon(center, config.HEX_SIZE)
+            points = hex.polygon(center, config.HEX_SIZE, cam_offset)
             pygame.draw.polygon(surface, config.LIGHT_GRAY, points, 1)
 
 # Usage example:

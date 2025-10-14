@@ -1,0 +1,38 @@
+[
+  {
+    "id": "outpost",
+    "name": "Outpost",
+    "hp": 2000,
+    "build_cost_credits": 100,
+    "build_cost_resources": {"Ferrovite Alloy": 5, "Ore bars": 10},
+    "special_ability": "supply_range",
+    "description": "A small, rapid-deploy star outpost that extends supply lines."
+  },
+  {
+    "id": "stellar_base",
+    "name": "Stellar Base",
+    "hp": 8000,
+    "build_cost_credits": 400,
+    "build_cost_resources": {"Plasma Alloy": 12, "Ferrovite Alloy": 15, "Ore bars": 30},
+    "special_ability": "defense",
+    "description": "A fortified starbase providing strong regional defense and logistics."
+  },
+  {
+    "id": "comms_array",
+    "name": "Communications Array",
+    "hp": 1500,
+    "build_cost_credits": 85,
+    "build_cost_resources": {"Ore bars": 3, "Ferrovite Alloy": 2},
+    "special_ability": "scan",
+    "description": "A relay array providing sector-wide communications and intelligence."
+  },
+  {
+    "id": "sensor_hub",
+    "name": "Sensor Hub",
+    "hp": 1200,
+    "build_cost_credits": 60,
+    "build_cost_resources": {"Biopolymer": 2, "Ore bars": 2},
+    "special_ability": "recon",
+    "description": "An advanced sensor suite for early warning and espionage."
+  }
+]

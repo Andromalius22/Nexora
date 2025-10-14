@@ -1,0 +1,23 @@
+resources up to T4 can be found in planetsor giant gasses planets. above, they are found in stars, black holes, asteroids belt, or even deep space.
+hyperfluids 
+    are gathered with Flux nets : magnetic funnels that freeze plasma threads into semi-stable strands.
+    Condensation: the strands are injected into phase cryochambers containing Alloy-Gas catalysts (T3 materials).
+    Resonant Seeding: special oscillating fields cause particle coherence to cascade — the “hyperphase.”
+    Stabilization: cooled within Quantum Alloy containers lined with Biopolymer membranes that adapt to field fluctuations.
+    Other trivia :
+        Each batch behaves uniquely — alive in a sense. Hyperfluid “ages” and develops resonance patterns based on its handling history, leading to cultural myths of temperamental batches.
+        Key ingredient for high-tech modules and infrastructure (e.g. “Hypergrid Networks”).
+        High market volatility — certain stars output rare isotopic variants.
+        Requires multifaction cooperation: gas miners (for raw plasma), alloy refiners (for containment), and biotech producers (for membranes).
+        Acts as both a strategic resource and a logistical challenge — transporting it safely is risky.
+    Industrial Applications:
+        Energy Conduits: zero-loss transmission lines between orbital stations.
+        Data Lattice Fluidics: allows processors to be built in liquid form; ships literally think through fluid motion.
+        Propulsion Medium: used in Hyperstream Drives, where fluid resonance amplifies thrust efficiency by bending local spacetime drag.
+        Cloaking Systems: the Quantum Vapor and early Hyperfluid variants are used for refractive field modulation.
+        AI Core Substrate: sentient AIs are “grown” in Hyperfluid baths that host their neural lattices.
+    
+- 'space_structures.json' holds all template data for buildable space structures: id, name, hp, cost, abilities, etc.
+- Use: from assetsmanager import load_space_structures; structs = load_space_structures()
+- Each is returned as SpaceStructure class (see assetsmanager.py)
+    
