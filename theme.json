@@ -105,7 +105,7 @@
             "text_vert_alignment": "center"
         } 
     },
-    "@trade_label": {
+    "@left_label": {
         "misc": 
         {
             "text_horiz_alignment":"left"

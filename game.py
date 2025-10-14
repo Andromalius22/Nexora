@@ -6,6 +6,8 @@ from camera import *
 from player import *
 from map import *
 from assetsmanager import *
+from world import *
+from ui import *
 
 class Game:
     def __init__(self):
@@ -29,6 +31,7 @@ class Game:
         self.assets.load_resource_icons(refined_data)
         self.tile_layer_surface = pygame.Surface((WIDTH, HEIGHT))
         self.state = 'MAIN_MENU'
+        self.tile_info_panel = TileInfoPanel(self.ui_manager, self.assets, pygame.Rect(SCREEN_WIDTH-300, 10, 300, 400))
 
         #UI
         # Container for main menu buttons
@@ -80,7 +83,20 @@ class Game:
                 if event.ui_element == self.button_new_game:
                     self.state = 'IN_GAME'
                     self.main_menu_panel.hide()
-        
+            #--- HEX TILE CLICK DETECTION
+            if self.state == 'IN_GAME' and event.type == pygame.MOUSEBUTTONDOWN and event.button == 1:
+                mouse_pos = pygame.mouse.get_pos()
+                center = (WIDTH // 2, HEIGHT // 2)
+                cam_offset = self.camera.get_offset() if self.camera else (0,0)
+                found = None
+                for h in self.map.all_hexes():
+                    if h.contains_point(mouse_pos, center, pixel_offset=cam_offset):
+                        found = h
+                        break
+                if found:
+                    self.tile_info_panel.show(found)
+                else:
+                    self.tile_info_panel.hide()
         keys = pygame.key.get_pressed()
         if self.camera.move(keys):
             self.redraw_tiles = True
