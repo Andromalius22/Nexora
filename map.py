@@ -8,6 +8,10 @@ from pygame.math import Vector2
 RESOURCE_TYPES = ["ore", "gas", "liquid", "organics"]
 SPECIAL_FEATURES = ["star_system", "nebula", "asteroid_field", "black_hole", "empty"]
 
+# Load planet types from external file
+with open("planet_types.json") as f:
+    PLANET_TYPES = json.load(f)
+
 # Helper: Load resource names by type
 with open("resources.json") as f:
     RESOURCES_DATA = json.load(f)
@@ -20,26 +24,121 @@ def random_resource():
 class Planet:
     def __init__(self, name=None):
         self.name = name or self.generate_name()
-        # 50% chance to be a mining planet, 50% refining
-        self.mode = random.choice(["mine", "refine"])
-        if self.mode == "mine":
-            self.resource_type, self.resource = random_resource()
-            self.can_refine = False
-        else:
-            self.resource_type, self.resource = random_resource()
-            self.can_refine = True
+        # Assign planet type based on weighted probabilities
+        self.planet_type = self.generate_planet_type()
+        planet_data = PLANET_TYPES[self.planet_type]
+        
+        # Initialize planet bonuses and properties
+        self.resource_bonus = planet_data.get("resource_bonus", {})
+        self.refine_bonus = planet_data.get("refine_bonus", {})
+        self.name_display = planet_data.get("name", self.planet_type.title())
+        self.description = planet_data.get("description", "")
+        self.rarity = planet_data.get("rarity", "common")
+        self.icon_path = planet_data.get("icon", "assets/resources/question.png")
+        self.colonization_cost = planet_data.get("colonization_cost", {"credits": 100, "resources": {}})
+        self.habitability = planet_data.get("habitability", 0.5)
+        self.defense_bonus = planet_data.get("defense_bonus", 0.0)
+        
+        # Planet starts uncolonized - no resource assigned yet
+        self.current_resource_type = None
+        self.current_resource = None
+        self.mode = None  # "mine" or "refine"
+        self.can_refine = False
+        self.is_colonized = False
+        
         self.population = random.randint(1,20) # 1-20 billion for slot count and scale
         self.slots = self.population # For now, same as population
+        self.used_slots=0
 
     def generate_name(self):
         # Very simple placeholder name gen
         return "Planet-" + str(random.randint(1000,9999))
+    
+    def generate_planet_type(self):
+        """Generate planet type with weighted probabilities based on rarity."""
+        weights = {}
+        for planet_type, data in PLANET_TYPES.items():
+            rarity = data.get("rarity", "common")
+            if rarity == "common":
+                weights[planet_type] = 0.25
+            elif rarity == "uncommon":
+                weights[planet_type] = 0.15
+            elif rarity == "rare":
+                weights[planet_type] = 0.05
+            elif rarity == "very_rare":
+                weights[planet_type] = 0.02
+            else:
+                weights[planet_type] = 0.1  # Default
+        
+        return random.choices(list(weights.keys()), weights=list(weights.values()))[0]
+    
+    def colonize(self, resource_type, resource_name, mode="mine"):
+        """Colonize the planet and assign it to mine/refine a specific resource."""
+        self.current_resource_type = resource_type
+        self.current_resource = resource_name
+        self.mode = mode
+        self.can_refine = (mode == "refine")
+        self.is_colonized = True
+    
+    def get_preferred_resources(self):
+        """Get the list of resources this planet type is optimized for."""
+        preferred_resources = []
+        if self.resource_bonus:
+            for resource_type, bonus_data in self.resource_bonus.items():
+                preferred_tiers = bonus_data["tiers"]
+                tier_resources = [name for name, data in RESOURCES_DATA.items() 
+                                if data["resource_type"] == resource_type and data["tier"] in preferred_tiers]
+                preferred_resources.extend(tier_resources)
+        return preferred_resources
+    
+    def get_resource_yield_bonus(self):
+        """Get the resource yield bonus for this planet's current resource type and tier."""
+        if not self.is_colonized or not self.current_resource_type:
+            return 1.0
+            
+        if self.current_resource_type in self.resource_bonus:
+            bonus_data = self.resource_bonus[self.current_resource_type]
+            resource_tier = RESOURCES_DATA[self.current_resource]["tier"]
+            if resource_tier in bonus_data["tiers"]:
+                return bonus_data["multiplier"]
+        return 1.0
+    
+    def get_refine_bonus(self):
+        """Get the refining bonus for this planet's current resource type and tier."""
+        if not self.is_colonized or not self.current_resource_type:
+            return 1.0
+            
+        if self.current_resource_type in self.refine_bonus:
+            bonus_data = self.refine_bonus[self.current_resource_type]
+            resource_tier = RESOURCES_DATA[self.current_resource]["tier"]
+            if resource_tier in bonus_data["tiers"]:
+                return bonus_data["multiplier"]
+        return 1.0
+
+    def add_used_slot(self):
+        """Add a used slot if there's space available. Returns True if successful, False otherwise."""
+        if self.used_slots < self.slots:
+            self.used_slots += 1
+            return True
+        return False
+    
+    def remove_used_slot(self):
+        """Remove a used slot if there are any. Returns True if successful, False otherwise."""
+        if self.used_slots > 0:
+            self.used_slots -= 1
+            return True
+        return False
+    
+    def get_available_slots(self):
+        """Return the number of available slots."""
+        return self.slots - self.used_slots
 
     def __repr__(self):
-        if self.can_refine:
-            return f"[Refinery: {self.resource}], Pop={self.population}B, Slots={self.slots}"
+        if not self.is_colonized:
+            return f"[{self.name_display} Uncolonized], Pop={self.population}B, Slots={self.used_slots}/{self.slots}"
         else:
-            return f"[Mine: {self.resource}], Pop={self.population}B, Slots={self.slots}"
+            mode_str = "Refinery" if self.can_refine else "Mine"
+            return f"[{self.name_display} {mode_str}: {self.current_resource}], Pop={self.population}B, Slots={self.used_slots}/{self.slots}"
 
 class StarSystem:
     def __init__(self):

@@ -38,6 +38,14 @@ class AssetsManager:
             if resource and icon_path:
                 self.load_image(f"resource_{resource}", icon_path, size=size)
     
+    def load_planets_icons(self, planets_data, size=(32, 32)):
+        for planet_name, planet_info in planets_data.items():
+            # Base resource icon
+            planet = planet_name
+            icon_path = planet_info.get("icon")
+            if planet and icon_path:
+                self.load_image(f"planet_{planet}", icon_path, size=size)
+    
     def load_unit_icons(self, army_data, size=(48, 48)):
         for category, unit_dict in army_data.items():
             for unit_name in unit_dict:

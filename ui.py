@@ -59,25 +59,37 @@ class TileInfoPanel:
             # 1. Planet type icon (leftmost)
             planet_icon = pygame_gui.elements.UIImage(
                 relative_rect=pygame.Rect(10, this_y, 32, 32),
-                image_surface=self.planet_icon,
+                image_surface=self.assets.get(f"planet_{planet.planet_type}"),
                 manager=self.ui_manager,
                 container=self.panel
             )
             self._objects.append(planet_icon)
-            # 2. Planet name, above and to right of resource icon
+            # 2. Planet name and type, above and to right of resource icon
             planet_name = pygame_gui.elements.UILabel(
-                relative_rect=pygame.Rect(50, this_y, 100, 18),
-                text=f"{planet.name}",
+                relative_rect=pygame.Rect(50, this_y, 200, 18),
+                text=f"{planet.name} ({planet.name_display})",
                 manager=self.ui_manager,
-                container=self.panel
+                container=self.panel,
+                object_id='@left_label'
             )
             self._objects.append(planet_name)
             # 3. Resource icon (below planet name, larger icon, no text)
-            resource_icon = self.assets.get(f"resource_{planet.resource}")
-            if resource_icon:
+            if planet.is_colonized and planet.current_resource:
+                resource_icon = self.assets.get(f"resource_{planet.current_resource}")
+                if resource_icon:
+                    resource_image = pygame_gui.elements.UIImage(
+                        relative_rect=pygame.Rect(57, this_y+19, 38, 28),
+                        image_surface=resource_icon,
+                        manager=self.ui_manager,
+                        container=self.panel
+                    )
+                    self._objects.append(resource_image)
+            else:
+                # Show question mark for uncolonized planets
+                question_icon = pygame.image.load("assets/resources/question.png").convert_alpha()
                 resource_image = pygame_gui.elements.UIImage(
                     relative_rect=pygame.Rect(57, this_y+19, 38, 28),
-                    image_surface=resource_icon,
+                    image_surface=question_icon,
                     manager=self.ui_manager,
                     container=self.panel
                 )
@@ -92,7 +104,7 @@ class TileInfoPanel:
             self._objects.append(slots_image)
             slots_text = pygame_gui.elements.UILabel(
                 relative_rect=pygame.Rect(130, this_y+19, 36, 20),
-                text=f"0/{planet.slots}",  # Placeholder, you can use real used slots when available
+                text=f"{planet.used_slots}/{planet.slots}",
                 manager=self.ui_manager,
                 container=self.panel
             )

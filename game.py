@@ -29,6 +29,9 @@ class Game:
         with open("refined.json") as f:
             refined_data = json.load(f)
         self.assets.load_resource_icons(refined_data)
+        with open("planet_types.json") as f:
+            planet_data = json.load(f)
+        self.assets.load_planets_icons(planet_data)
         self.tile_layer_surface = pygame.Surface((WIDTH, HEIGHT))
         self.state = 'MAIN_MENU'
         self.tile_info_panel = TileInfoPanel(self.ui_manager, self.assets, pygame.Rect(SCREEN_WIDTH-300, 10, 300, 400))
