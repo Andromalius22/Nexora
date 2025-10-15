@@ -29,12 +29,22 @@ class Game:
         with open("refined.json") as f:
             refined_data = json.load(f)
         self.assets.load_resource_icons(refined_data)
+        
+        # Load planet type icons
         with open("planet_types.json") as f:
-            planet_data = json.load(f)
-        self.assets.load_planets_icons(planet_data)
+            planet_types_data = json.load(f)
+        self.assets.load_planets_icons(planet_types_data)
         self.tile_layer_surface = pygame.Surface((WIDTH, HEIGHT))
         self.state = 'MAIN_MENU'
         self.tile_info_panel = TileInfoPanel(self.ui_manager, self.assets, pygame.Rect(SCREEN_WIDTH-300, 10, 300, 400))
+
+        # Main menu background image (safe fallback)
+        self.menu_bg = None
+        try:
+            bg_surface = pygame.image.load("assets/images/nebulae_01.jpg").convert()
+            self.menu_bg = pygame.transform.scale(bg_surface, (SCREEN_WIDTH, SCREEN_HEIGHT))
+        except Exception as e:
+            print(f"[Game] Menu background not found or failed to load: {e}")
 
         #UI
         # Container for main menu buttons
@@ -109,10 +119,18 @@ class Game:
     def update(self, time_delta):
         # Always update the UI manager each frame (mandatory)
         self.ui_manager.update(time_delta)
+        
+        # Update tooltips if in game
+        if self.state == 'IN_GAME':
+            mouse_pos = pygame.mouse.get_pos()
+            self.tile_info_panel.update_tooltips(mouse_pos)
 
     def draw(self):
         if self.state == 'MAIN_MENU':
-            self.screen.fill((255, 255, 255))  # white background for menu
+            if self.menu_bg:
+                self.screen.blit(self.menu_bg, (0, 0))
+            else:
+                self.screen.fill((255, 255, 255))  # white background for menu
         elif self.state == 'IN_GAME' or self.state == 'TUTORIAL' :
             center = (WIDTH // 2,
                 HEIGHT // 2)
@@ -124,6 +142,11 @@ class Game:
             # Always blit the cached tile layer
             self.screen.blit(self.tile_layer_surface, (0, 0))   # Will only redraw tiles when necessary
         self.ui_manager.draw_ui(self.screen)
+        
+        # Draw tooltips after UI
+        if self.state == 'IN_GAME':
+            self.tile_info_panel.draw_tooltips(self.screen)
+        
         pygame.display.flip()
     
     def draw_tile_layer(self):
