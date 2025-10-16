@@ -51,17 +51,16 @@
             "normal_text":"rgb(100, 255, 100)"
         }
     },
-    "#tax_window": {
-        "colours":
+    "@white_text": {
+        "colours": 
         {
-            "dark_bg":"#000000",
-            "normal_border":"#FFFF00"
-        },
-        "misc":
+            "normal_text":"#FFFFFF"
+        }
+    },
+    "@yellow_text": {
+        "colours": 
         {
-            "shape":"rounded_rectangle",
-            "shape_corner_radius":"13",
-            "enable_title_bar":"1"
+            "normal_text": "#FFA500"
         }
     },
     "@food_bar": {
@@ -111,24 +110,6 @@
             "text_horiz_alignment":"left"
         }
     },
-    "@food_ok": {
-        "colours": 
-        {
-            "normal_text":"#FFFFFF"
-        }
-    },
-    "@food_low": {
-        "colours": 
-        {
-            "normal_text": "#FFA500"
-        }
-    },
-    "@food_critical": {
-        "colours": 
-        {
-            "normal_text": "#FF0000"
-        }
-    },
     "#in_game_panel_mother": {
         "colours": 
         {
@@ -158,6 +139,13 @@
         {
             "hovered_border":"rgb(255, 255, 0)"
         }
+    },
+    "#star_system_overview_window":{
+        "misc":
+        {
+            "enable_title_bar":"0"
+        }
     }
+
   }
   

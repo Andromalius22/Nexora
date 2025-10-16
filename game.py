@@ -12,7 +12,7 @@ from ui import *
 class Game:
     def __init__(self):
         pygame.init()
-        self.screen = pygame.display.set_mode((800, 600))
+        self.screen = pygame.display.set_mode((SCREEN_WIDTH, 600))
         self.ui_manager = pygame_gui.UIManager((SCREEN_WIDTH, SCREEN_HEIGHT), 'theme.json') #480, 800 for more mobile-like
         pygame.display.set_caption("Nexora")
         self.running = True
@@ -29,7 +29,14 @@ class Game:
         with open("refined.json") as f:
             refined_data = json.load(f)
         self.assets.load_resource_icons(refined_data)
-        
+        #load icons manually
+        self.assets.load_image("mine_icon", "assets/icons/mine_cart.png")
+        self.assets.load_image("industry_icon", "assets/icons/industry.jpg")
+        self.assets.load_image("ore_icon", "assets/icons/ore.png")
+        self.assets.load_image("gas_icon", "assets/icons/gas.png")
+        self.assets.load_image("organics_icon", "assets/icons/organics.png")
+        self.assets.load_image("liquid_icon", "assets/icons/liquid.png")
+
         # Load planet type icons
         with open("planet_types.json") as f:
             planet_types_data = json.load(f)
@@ -37,6 +44,8 @@ class Game:
         self.tile_layer_surface = pygame.Surface((WIDTH, HEIGHT))
         self.state = 'MAIN_MENU'
         self.tile_info_panel = TileInfoPanel(self.ui_manager, self.assets, pygame.Rect(SCREEN_WIDTH-300, 10, 300, 400))
+        # Planet management panel on the left
+        self.planet_mgmt_panel = PlanetManagement(self.ui_manager, self.assets, pygame.Rect(10, 10, 280, 480))
 
         # Main menu background image (safe fallback)
         self.menu_bg = None
@@ -78,6 +87,88 @@ class Game:
                                                                container=self.main_menu_panel
                                                                )
 
+        # Parameters menu (hidden by default)
+        self.params_panel = pygame_gui.elements.UIPanel(
+            relative_rect=pygame.Rect((SCREEN_WIDTH//2 - 220, SCREEN_HEIGHT//2 - 160), (440, 320)),
+            starting_height=2,
+            manager=self.ui_manager,
+            visible=False
+        )
+        # Title
+        self.params_title = pygame_gui.elements.UILabel(
+            relative_rect=pygame.Rect(0, 10, 440, 30),
+            text='New Game Parameters',
+            manager=self.ui_manager,
+            container=self.params_panel
+        )
+        # Galaxy size
+        self.label_galaxy_size = pygame_gui.elements.UILabel(
+            relative_rect=pygame.Rect(20, 60, 140, 24),
+            text='Galaxy Size',
+            manager=self.ui_manager,
+            container=self.params_panel
+        )
+        self.dropdown_galaxy_size = pygame_gui.elements.UIDropDownMenu(
+            options_list=['Small','Medium','Large'],
+            starting_option='Medium',
+            relative_rect=pygame.Rect(180, 60, 200, 28),
+            manager=self.ui_manager,
+            container=self.params_panel
+        )
+        # Star density
+        self.label_star_density = pygame_gui.elements.UILabel(
+            relative_rect=pygame.Rect(20, 110, 140, 24),
+            text='Star Density',
+            manager=self.ui_manager,
+            container=self.params_panel
+        )
+        self.slider_star_density = pygame_gui.elements.UIHorizontalSlider(
+            relative_rect=pygame.Rect(180, 110, 200, 24),
+            start_value=50,
+            value_range=(0,100),
+            manager=self.ui_manager,
+            container=self.params_panel
+        )
+        self.value_star_density = pygame_gui.elements.UILabel(
+            relative_rect=pygame.Rect(390, 110, 40, 24),
+            text='50',
+            manager=self.ui_manager,
+            container=self.params_panel
+        )
+        # Nebula density (example extra)
+        self.label_nebula_density = pygame_gui.elements.UILabel(
+            relative_rect=pygame.Rect(20, 150, 140, 24),
+            text='Nebula Density',
+            manager=self.ui_manager,
+            container=self.params_panel
+        )
+        self.slider_nebula_density = pygame_gui.elements.UIHorizontalSlider(
+            relative_rect=pygame.Rect(180, 150, 200, 24),
+            start_value=20,
+            value_range=(0,100),
+            manager=self.ui_manager,
+            container=self.params_panel
+        )
+        self.value_nebula_density = pygame_gui.elements.UILabel(
+            relative_rect=pygame.Rect(390, 150, 40, 24),
+            text='20',
+            manager=self.ui_manager,
+            container=self.params_panel
+        )
+        # Buttons
+        self.button_params_start = pygame_gui.elements.UIButton(
+            relative_rect=pygame.Rect(240, 260, 180, 36),
+            text='Start',
+            manager=self.ui_manager,
+            container=self.params_panel
+        )
+        self.button_params_back = pygame_gui.elements.UIButton(
+            relative_rect=pygame.Rect(20, 260, 180, 36),
+            text='Back',
+            manager=self.ui_manager,
+            container=self.params_panel
+        )
+
     def run(self):
         while self.running:
             time_delta = self.clock.tick(60) / 1000.0  # seconds passed since last frame
@@ -91,25 +182,84 @@ class Game:
                 self.running = False
             
             self.ui_manager.process_events(event)
-        
+            
+            if event.type == pygame_gui.UI_HORIZONTAL_SLIDER_MOVED:
+                if event.ui_element == self.slider_star_density:
+                    self.value_star_density.set_text(str(int(self.slider_star_density.get_current_value())))
+                elif event.ui_element == self.slider_nebula_density:
+                    self.value_nebula_density.set_text(str(int(self.slider_nebula_density.get_current_value())))
+            
             if event.type == pygame_gui.UI_BUTTON_PRESSED:
                 if event.ui_element == self.button_new_game:
-                    self.state = 'IN_GAME'
+                    # Show parameters menu instead of starting immediately
                     self.main_menu_panel.hide()
-            #--- HEX TILE CLICK DETECTION
+                    self.params_panel.show()
+                elif event.ui_element == self.button_params_back:
+                    # Go back to main menu
+                    self.params_panel.hide()
+                    self.main_menu_panel.show()
+                elif event.ui_element == self.button_params_start:
+                    # Read parameters and start game
+                    size_option = self.dropdown_galaxy_size.selected_option
+                    star_density = int(self.slider_star_density.get_current_value())
+                    nebula_density = int(self.slider_nebula_density.get_current_value())
+                    # Map size mapping
+                    if size_option == 'Small':
+                        map_width, map_height = 24, 18
+                    elif size_option == 'Large':
+                        map_width, map_height = 56, 42
+                    else:  # Medium
+                        map_width, map_height = 36, 27
+                    # Create new galaxy map with parameters
+                    self.map = GalaxyMap(map_width, map_height, star_density=star_density, nebula_density=nebula_density)
+                    # Reset camera to new map bounds
+                    self.camera = Camera(screen_width=MAP_WIDTH, screen_height=SCREEN_HEIGHT, world_width=self.map.width, world_height=self.map.height)
+                    # Force redraw of tile layer
+                    self.redraw_tiles = True
+                    # Store settings for later use
+                    self.new_game_settings = {
+                        'galaxy_size': size_option,
+                        'star_density': star_density,
+                        'nebula_density': nebula_density,
+                        'map_width': map_width,
+                        'map_height': map_height
+                    }
+                    self.params_panel.hide()
+                    self.state = 'IN_GAME'
+            
+            # Forward UI events to planet management (e.g., build/apply buttons)
+            if hasattr(self, 'planet_mgmt_panel'):
+                try:
+                    with open("resources.json") as f:
+                        resource_data = json.load(f)
+                except Exception:
+                    resource_data = {}
+                self.planet_mgmt_panel.process_event(event, resource_data)
+            
             if self.state == 'IN_GAME' and event.type == pygame.MOUSEBUTTONDOWN and event.button == 1:
                 mouse_pos = pygame.mouse.get_pos()
+
+                # Skip map clicks if mouse over any UI element
+                if self.ui_manager.get_hovering_any_element():
+                    continue  # Let pygame_gui handle it
+
+                # Otherwise, process map click
                 center = (WIDTH // 2, HEIGHT // 2)
-                cam_offset = self.camera.get_offset() if self.camera else (0,0)
+                cam_offset = self.camera.get_offset() if self.camera else (0, 0)
                 found = None
                 for h in self.map.all_hexes():
                     if h.contains_point(mouse_pos, center, pixel_offset=cam_offset):
                         found = h
                         break
+
                 if found:
-                    self.tile_info_panel.show(found)
+                    self.tile_info_panel.show_info(found)
+                    if found.feature == 'star_system' and found.contents.planets:
+                        self.planet_mgmt_panel.show(found.contents.planets[0], resource_data)
                 else:
                     self.tile_info_panel.hide()
+                    self.planet_mgmt_panel.hide()
+
         keys = pygame.key.get_pressed()
         if self.camera.move(keys):
             self.redraw_tiles = True
@@ -124,6 +274,7 @@ class Game:
         if self.state == 'IN_GAME':
             mouse_pos = pygame.mouse.get_pos()
             self.tile_info_panel.update_tooltips(mouse_pos)
+            self.planet_mgmt_panel.update_tooltips(mouse_pos)
 
     def draw(self):
         if self.state == 'MAIN_MENU':
@@ -142,10 +293,12 @@ class Game:
             # Always blit the cached tile layer
             self.screen.blit(self.tile_layer_surface, (0, 0))   # Will only redraw tiles when necessary
         self.ui_manager.draw_ui(self.screen)
+        self.planet_mgmt_panel.draw_overlays(self.screen)
         
         # Draw tooltips after UI
         if self.state == 'IN_GAME':
             self.tile_info_panel.draw_tooltips(self.screen)
+            self.planet_mgmt_panel.draw_tooltips(self.screen)
         
         pygame.display.flip()
     

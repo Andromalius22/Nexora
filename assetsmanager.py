@@ -15,6 +15,7 @@ class AssetsManager:
         if size:
             img = pygame.transform.scale(img, size)
         self.assets[key] = img
+        #print(f"[AssetsManager]key: {key}")
     
     def load_animation(self, key, folder, size=None):
         frames = []

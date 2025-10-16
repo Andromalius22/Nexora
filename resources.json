@@ -157,8 +157,8 @@
         "resource_icon": "assets/resources/T5_GAS.png",
         "resource_type": "gas",
         "description": "Gas found rarely in quantum tide pools, resonant vortices created by stellar fields.",
-        "tier": 4,
-        "base_price": 150
+        "tier": 5,
+        "base_price": 300
     },
     "Aetherflow": {
         "resource_icon": "assets/resources/T6_GAS.png",

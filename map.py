@@ -22,8 +22,9 @@ def random_resource():
     return t, random.choice(RESOURCE_NAMES_BY_TYPE[t])
 
 class Planet:
-    def __init__(self, name=None):
+    def __init__(self, name=None, star_system=None):
         self.name = name or self.generate_name()
+        self.star_system=None
         # Assign planet type based on weighted probabilities
         self.planet_type = self.generate_planet_type()
         planet_data = PLANET_TYPES[self.planet_type]
@@ -44,11 +45,14 @@ class Planet:
         self.current_resource = None
         self.mode = None  # "mine" or "refine"
         self.can_refine = False
-        self.is_colonized = False
+        self.is_colonized = False       
         
         self.population = random.randint(1,20) # 1-20 billion for slot count and scale
         self.slots = self.population # For now, same as population
         self.used_slots=0
+        # Basic planet management fields
+        self.buildings = {"farm": 0, "mine": 0, "industry": 0, "forge": 0}
+        self.defense_value = 0
 
     def generate_name(self):
         # Very simple placeholder name gen
@@ -140,28 +144,107 @@ class Planet:
             mode_str = "Refinery" if self.can_refine else "Mine"
             return f"[{self.name_display} {mode_str}: {self.current_resource}], Pop={self.population}B, Slots={self.used_slots}/{self.slots}"
 
+    def extract_resources(self):
+        """Extract or refine resources depending on planet mode."""
+        with open("refined.json") as f:
+            REFINED_DATA = json.load(f)
+        if not self.is_colonized or not self.star_system:
+            return 0
+
+        owner = getattr(self.star_system.hextile, "owner", None)
+        if not owner:
+            return 0
+
+        tech_level = 1.0  # For future scaling
+        total_yield = 0.0
+
+        # --- MINING MODE ---
+        if self.mode == "mine" and self.current_resource:
+            mine_count = self.buildings.get("mine", 0)
+            if mine_count <= 0:
+                return 0
+
+            base_yield = mine_count * tech_level
+            bonus = self.get_resource_yield_bonus()
+            total_yield = base_yield * bonus
+
+            owner.resources[self.current_resource] = (
+                owner.resources.get(self.current_resource, 0) + total_yield
+            )
+            self.resource_mined = self.current_resource
+            return total_yield
+
+        # --- REFINING MODE ---
+        elif self.mode == "refine" and self.current_resource:
+            industry_count = self.buildings.get("industry", 0)
+            if industry_count <= 0:
+                return 0
+
+            base_yield = industry_count * tech_level
+            bonus = self.get_refine_bonus()
+            total_yield = base_yield * bonus
+
+            # Fetch refined material data
+            refined_info = REFINED_DATA.get(self.current_resource)
+            if not refined_info:
+                print(f"[WARN] {self.current_resource} not found in refined data.")
+                return 0
+
+            # Check if required input resources exist and are available
+            input_resources = refined_info.get("resources_needed", [])
+            can_refine = True
+            for res in input_resources:
+                if owner.resources.get(res, 0) < total_yield:
+                    can_refine = False
+                    break
+
+            if not can_refine:
+                print(f"[INFO] Not enough input materials to refine {self.current_resource}.")
+                return 0
+
+            # Consume input resources
+            for res in input_resources:
+                owner.resources[res] -= total_yield
+
+            # Add refined product
+            owner.resources[self.current_resource] = (
+                owner.resources.get(self.current_resource, 0) + total_yield
+            )
+
+            self.resource_refined = self.current_resource
+            return total_yield
+
+        return 0
+
 class StarSystem:
-    def __init__(self):
+    def __init__(self, hextile=None):
         self.name = self.generate_name()
-        self.planets = [Planet() for _ in range(random.randint(1,4))] # 1-4 planets
+        self.hextile=hextile
+        self.planets = [Planet(star_system=self) for _ in range(random.randint(1,4))] # 1-4 planets
     def generate_name(self):
         return "System-"+str(random.randint(100,999))
     def __repr__(self):
         return f"{self.name}: {self.planets}"
 
 class Hex:
-    def __init__(self, q, r, s=None):
+    def __init__(self, q, r, s=None, weights=None, owner=None):
         self.q = q  # column (axial)
         self.r = r  # row (axial)
         self.s = s if s is not None else -q - r  # cube coords: q, r, s sum to 0
+        self._feature_weights = weights
+        self.owner=owner #Empire class
         self.feature, self.contents = self.generate_feature()
     def generate_feature(self):
+        if self._feature_weights is None:
+            weights = [0.3, 0.12, 0.14, 0.04, 0.1] # 30% system, 12% nebula, etc.
+        else:
+            weights = self._feature_weights
         feature = random.choices(
             SPECIAL_FEATURES,
-            weights=[0.3, 0.12, 0.14, 0.04, 0.1], # 60% system, 12% nebula, etc.
+            weights=weights,
         )[0]
         if feature == "star_system":
-            return feature, StarSystem()
+            return feature, StarSystem(hextile=self)
         else:
             return feature, None  # Could make Nebula, AsteroidField, BlackHole classes later
     def __repr__(self):
@@ -199,17 +282,37 @@ class GalaxyMap:
     """
     Generates a 2D hex grid for a galaxy map using pointy-topped axial coordinates.
     """
-    def __init__(self, width, height):
+    def __init__(self, width, height, star_density=50, nebula_density=20):
         self.width = width  # columns (q)
         self.height = height  # rows (r)
+        self.star_density = star_density  # 0-100
+        self.nebula_density = nebula_density  # 0-100
         self.grid = self._generate_hexes()
+
+    def _feature_weights(self):
+        # Base weights order aligned with SPECIAL_FEATURES
+        base_star = 0.30
+        base_nebula = 0.12
+        base_asteroid = 0.14
+        base_black_hole = 0.04
+        base_empty = 0.10
+        # Scale star and nebula by density factors (0.2x .. 1.2x)
+        star_scale = 0.2 + (self.star_density / 100.0)
+        nebula_scale = 0.2 + (self.nebula_density / 100.0)
+        w_star = base_star * star_scale
+        w_nebula = base_nebula * nebula_scale
+        # Keep others constant but lightly reduce empty as density goes up
+        density_factor = (self.star_density + self.nebula_density) / 200.0  # 0..1
+        w_empty = max(0.02, base_empty * (1.0 - 0.4 * density_factor))
+        return [w_star, w_nebula, base_asteroid, base_black_hole, w_empty]
 
     def _generate_hexes(self):
         grid = []
+        weights = self._feature_weights()
         for q in range(self.width):
             q_offset = math.floor(q / 2)  # even-q vertical layout
             for r in range(-q_offset, self.height - q_offset):
-                grid.append(Hex(q, r))
+                grid.append(Hex(q, r, weights=weights))
         return grid
 
     def get_hex(self, q, r):

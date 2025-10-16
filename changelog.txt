@@ -1,0 +1,5 @@
+commit 9
+fixed typo in resource.json
+added new graphics
+UI changes
+distinction between player and empires

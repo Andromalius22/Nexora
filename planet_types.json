@@ -7,8 +7,8 @@
         "resource_bonus": {
             "ore": {
                 "tiers": [1, 2, 3],
-                "multiplier": 1.5,
-                "description": "50% bonus to T1-T3 ore yield"
+                "multiplier": 2,
+                "description": "100% bonus to T1-T3 ore yield"
             }
         },
         "refine_bonus": {},
@@ -18,6 +18,31 @@
         },
         "habitability": 0.3,
         "defense_bonus": 0.2
+    },
+    "terrestrial": {
+        "name": "terrestrial",
+        "description": "Earth-like planets good for colonization",
+        "icon": "assets/planets/Terrestrial_05-256x256.png",
+        "rarity": "uncommon",
+        "resource_bonus": {
+            "ore": {
+                "tiers": [1, 2, 3],
+                "multiplier": 1.5,
+                "description": "50% bonus to T1-T3 ore yield"
+            },
+            "liquid": {
+                "tiers": [1, 2, 3],
+                "multiplier": 2,
+                "description": "100% bonus to T1-T3 liquid yield"
+            }
+        },
+        "refine_bonus": {},
+        "colonization_cost": {
+            "credits": 100,
+            "resources": {"Ore bars": 5}
+        },
+        "habitability": 1,
+        "defense_bonus": 0.5
     },
     "volcanic": {
         "name": "Volcanic World",
