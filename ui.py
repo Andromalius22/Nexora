@@ -81,6 +81,51 @@ class TooltipManager:
 
 ##############################################################################################################################
 
+class NotificationManager:
+    def __init__(self, ui_manager, screen_rect):
+        self.ui_manager = ui_manager
+        self.screen_rect = screen_rect
+        self.active_notifications = []
+        self.display_time = 3000  # milliseconds (3 seconds)
+        
+        # Styling options
+        self.font_color = pygame.Color(255, 50, 50)  # red
+        self.bg_color = pygame.Color(30, 0, 0)
+        self.alpha = 220
+
+    def show(self, message, duration=None):
+        """Display a notification at the top center of the screen."""
+        if duration is None:
+            duration = self.display_time
+
+        # Create label element
+        notif_label = pygame_gui.elements.UILabel(
+            relative_rect=pygame.Rect(0, 0, 400, 30),
+            text=message,
+            manager=self.ui_manager,
+            anchors={'centerx': 'centerx', 'top': 'top'},
+            object_id=pygame_gui.core.ObjectID(class_id='@notification_label')
+        )
+
+        # Center horizontally
+        notif_label.set_position((
+            self.screen_rect.centerx - notif_label.rect.width // 2,
+            20
+        ))
+
+        # Store active notification
+        self.active_notifications.append((notif_label, pygame.time.get_ticks(), duration))
+
+    def update(self):
+        """Remove expired notifications."""
+        current_time = pygame.time.get_ticks()
+        for notif, start_time, duration in self.active_notifications[:]:
+            if current_time - start_time >= duration:
+                notif.kill()
+                self.active_notifications.remove((notif, start_time, duration))
+
+##############################################################################################################################
+
 class TileInfoPanel(pygame_gui.elements.UIWindow):
     def __init__(self, ui_manager, assets, rect):
         super().__init__(
@@ -104,9 +149,14 @@ class TileInfoPanel(pygame_gui.elements.UIWindow):
         
         # Store planet icon rects for tooltip detection
         self.planet_icon_rects = []
+        #same for slot tooltips
+        self.slot_icon_rects = []
 
         # This container is now the main content area inside the window
         self.container = self.get_container()
+
+        self.icon_size = 19
+        self.icon_gap = 6
 
 
     def show_info(self, hex_obj):
@@ -206,7 +256,7 @@ class TileInfoPanel(pygame_gui.elements.UIWindow):
             self._objects.append(slots_image)
             slots_text = pygame_gui.elements.UILabel(
                 relative_rect=pygame.Rect(130, this_y+19, 36, 20),
-                text=f"{planet.used_slots}/{planet.slots}",
+                text=f"{len(planet.get_used_slots())}/{len(planet.slots)}",
                 manager=self.ui_manager,
                 container=self.container
             )
@@ -230,6 +280,63 @@ class TileInfoPanel(pygame_gui.elements.UIWindow):
             )
             self._objects.append(defense_text)
             y += 40
+            max_per_row = 10
+            slot_types_order = ["farm", "mine", "refine", "industry", "empty"]
+            
+            # Flatten slots grouped by type
+            grouped_slots = []
+            for t in slot_types_order:
+                grouped_slots.extend([s for s in planet.slots if s.type == t])
+
+            self.slot_icon_rects.clear()
+            for i, slot in enumerate(grouped_slots):
+                row = i // max_per_row
+                col = i % max_per_row
+                rect = pygame.Rect(
+                    20 + col * (self.icon_size + self.icon_gap),
+                    this_y + row * (self.icon_size + self.icon_gap) + 48,
+                    self.icon_size,
+                    self.icon_size
+                )
+
+                # Choose the correct icon
+                if slot.status == "under_construction":
+                    icon_surface = self.assets.get(f"{slot.type}_icon")  # e.g., mine_icon
+                    icon_image = pygame_gui.elements.UIImage(
+                        relative_rect=rect,
+                        image_surface=icon_surface,
+                        manager=self.ui_manager,
+                        container=self.container
+                    )
+                    # Draw hammer in top-right corner
+                    hammer_rect = pygame.Rect(
+                        rect.right - 12, rect.top, 12, 12
+                    )
+                    hammer_image = pygame_gui.elements.UIImage(
+                        relative_rect=hammer_rect,
+                        image_surface=self.assets.get("hammer_icon"),
+                        manager=self.ui_manager,
+                        container=self.container
+                    )
+                    self._objects.append(hammer_image)
+                else:
+                    icon_surface = self.assets.get(f"{slot.type}_icon") if slot.type != "empty" else self.assets.get("plus_icon")
+                    icon_image = pygame_gui.elements.UIImage(
+                        relative_rect=rect,
+                        image_surface=icon_surface,
+                        manager=self.ui_manager,
+                        container=self.container
+                    )
+
+                # Store for tooltips or click detection
+                self.slot_icon_rects.append({'rect': rect, 'slot': slot})
+                print(f"[UI] slot.status: {slot.status}")
+                self._objects.append(icon_image)
+
+            if len(planet.slots)>10:
+                y +=30
+            y += 30
+            print(f"[UI]planet.industry_points : {planet.industry_points}")
         #self.panel.show()
         
         self._objects.extend([name_lbl, star_type_lbl, planet_hdr])
@@ -247,6 +354,12 @@ class TileInfoPanel(pygame_gui.elements.UIWindow):
             if icon_info['rect'].collidepoint(relative_mouse_pos):
                 planet = icon_info['planet']
                 tooltip_text = f"{planet.name_display}\n{planet.description}\nRarity: {planet.rarity.title()}"
+                self.tooltip_manager.show_tooltip(tooltip_text, icon_info['rect'])
+                break
+        for icon_info in self.slot_icon_rects:
+            if icon_info['rect'].collidepoint(relative_mouse_pos):
+                slot = icon_info['slot']
+                tooltip_text = f"{slot}"
                 self.tooltip_manager.show_tooltip(tooltip_text, icon_info['rect'])
                 break
     
@@ -267,7 +380,7 @@ class TileInfoPanel(pygame_gui.elements.UIWindow):
 
 
 class PlanetManagement:
-    def __init__(self, ui_manager, assets, rect):
+    def __init__(self, ui_manager, assets, rect, building_mgmt=None, notifications_manager=None):
         self.panel = pygame_gui.elements.UIPanel(
             relative_rect=rect,
             starting_height=1,
@@ -280,6 +393,8 @@ class PlanetManagement:
         self.selected_planet = None
         self.font = pygame.font.SysFont("arial", 16)
         self.tooltip_manager = TooltipManager(self.font)
+        self.building_mgmt=building_mgmt
+        self.notifications= notifications_manager
         self.mode_icons_rect = []
         self.resource_category_buttons = {}
         self.selected_category = None
@@ -317,7 +432,7 @@ class PlanetManagement:
             ),
             'refine': pygame_gui.elements.UIImage(
                 relative_rect=pygame.Rect(148, y, 48, 48),
-                image_surface=self.assets.get("industry_icon"),
+                image_surface=self.assets.get("refine_icon"),
                 manager=self.ui_manager,
                 container=self.panel
             ),
@@ -543,27 +658,26 @@ class PlanetManagement:
 
     def process_event(self, event, resources_data):
         if event.type == pygame_gui.UI_BUTTON_PRESSED and self.selected_planet:
+            planet = self.selected_planet
+            planet_industry_points = planet.get_total_industry_points()
+            msg=' '
+            
             if event.ui_element == self.btn_build_farm:
-                self.selected_planet.buildings['farm'] += 1
-                self.status_lbl.set_text("Built Farm")
+                msg = planet.start_building_in_slot("farm", self.building_mgmt, planet_industry_points)
             elif event.ui_element == self.btn_build_mine:
-                self.selected_planet.buildings['mine'] += 1
-                self.status_lbl.set_text("Built Mine")
+                msg = planet.start_building_in_slot("mine", self.building_mgmt, planet_industry_points)
             elif event.ui_element == self.btn_build_industry:
-                self.selected_planet.buildings['industry'] += 1
-                self.status_lbl.set_text("Built Industry")
+                msg = planet.start_building_in_slot("industry", self.building_mgmt, planet_industry_points)
             elif event.ui_element == self.btn_build_forge:
-                self.selected_planet.buildings['forge'] += 1
-                self.status_lbl.set_text("Built Forge")
+                msg = planet.start_building_in_slot("refinery", self.building_mgmt, planet_industry_points)
+                planet.mode = "refine"  # Forge sets refining mode
+
             elif event.ui_element == self.btn_build_defense:
                 self.selected_planet.defense_value += 1
                 self.status_lbl.set_text(f"Defense {self.selected_planet.defense_value}")
             elif event.ui_element == self.apply_resource_btn:
                 self.selected_planet.current_resource = self.selected_resource
-                print("[UI] test click")
-                print(f"[UI] self.selected_planet: {self.selected_planet}")
-                print(f"[UI] self.selected_resource: {self.selected_resource}")
-                print(f"[UI] self.selected_planet.current_resource: {self.selected_planet.current_resource}")
+            self.notifications.show(msg)
 
         elif event.type == pygame.MOUSEBUTTONDOWN and event.button == 1:
             mouse_pos = event.pos

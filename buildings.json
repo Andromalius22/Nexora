@@ -1,0 +1,77 @@
+{
+    "farm": {
+        "name": "Farm",
+        "cost": {
+            "industry": 50,
+            "credits": 100
+        },
+        "description": "Produces food to support population growth.",
+        "type": "production",
+        "slot_type": "farm",
+        "resource_bonus": {
+            "population_growth": 0.1
+        },
+        "maintenance_cost": {
+            "credits": 1
+        },
+        "defense_bonus": 0.0,
+        "production_points": 0,
+        "construction_priority": 1
+    },
+    "mine": {
+        "name": "Mine",
+        "cost": {
+            "industry": 10,
+            "credits": 200
+        },
+        "description": "Extracts raw resources from the planet.",
+        "type": "resource",
+        "slot_type": "mine",
+        "resource_bonus": {
+            "ore": 1.0,
+            "gas": 1.0
+        },
+        "maintenance_cost": {
+            "credits": 10
+        },
+        "defense_bonus": 0.0,
+        "production_points": 0,
+        "construction_priority": 2
+    },
+    "refinery": {
+        "name": "Refinery",
+        "cost": {
+            "industry": 15,
+            "credits": 300
+        },
+        "description": "Processes raw resources into refined materials.",
+        "type": "resource",
+        "slot_type": "refine",
+        "resource_bonus": {
+            "refined_materials": 1.0
+        },
+        "maintenance_cost": {
+            "credits": 15
+        },
+        "defense_bonus": 0.0,
+        "production_points": 0,
+        "construction_priority": 4
+    },
+    "industry": {
+        "name": "Industry",
+        "cost": {
+            "industry": 20,
+            "credits": 500
+        },
+        "description": "Generates industry points for building other structures.",
+        "type": "production",
+        "slot_type": "industry",
+        "resource_bonus": {},
+        "maintenance_cost": {
+            "credits": 20
+        },
+        "defense_bonus": 0.0,
+        "production_points": 100,
+        "construction_priority": 3
+    }
+}

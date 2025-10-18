@@ -7,9 +7,11 @@ class Player:
         self.victory_points = 0
 
 class Empire:
-    def _init__(self):
-        self.name = "Empire"
-        self.color = (255, 255, 0)
+    def __init__(self, player, name="Empire", color=(255, 255, 0)):
+        self.player=player
+        self.name = name
+        self.color = color
+        self.home_tile=None
+        self.tiles_owned = set()
         self.army = []
         self.resources = []
-        self.units = []

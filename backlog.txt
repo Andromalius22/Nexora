@@ -5,3 +5,8 @@ rework the resources icons
 do refined icons
 finish refined items list
 rework the colonization system
+include a random empire name generator
+patent will have an expiration date
+adding money/galactic credits
+options to remove slots
+add more options to planetary defense

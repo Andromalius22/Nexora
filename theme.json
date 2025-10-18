@@ -145,6 +145,17 @@
         {
             "enable_title_bar":"0"
         }
+    },
+    "@notification_label": {
+        "colours": {
+            "normal_bg": "#330000",
+            "normal_text": "#FF5555",
+            "border": "#550000"
+        },
+        "misc": {
+            "shape": "rectangle",
+            "shadow_width": 2
+        }
     }
 
   }

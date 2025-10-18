@@ -19,7 +19,6 @@ class Game:
         self.clock = pygame.time.Clock()
         self.redraw_tiles = True
         self.frame_count = 0
-        self.player = Player()
         self.map = GalaxyMap(MAP_WIDTH, HEIGHT)
         self.camera = Camera(screen_width=MAP_WIDTH, screen_height=SCREEN_HEIGHT, world_width=self.map.width, world_height=self.map.height)
         with open("resources.json") as f:
@@ -31,21 +30,28 @@ class Game:
         self.assets.load_resource_icons(refined_data)
         #load icons manually
         self.assets.load_image("mine_icon", "assets/icons/mine_cart.png")
+        self.assets.load_image("farm_icon", "assets/icons/farm.png")
         self.assets.load_image("industry_icon", "assets/icons/industry.jpg")
+        self.assets.load_image("refine_icon", "assets/icons/steell_mill_02.png")
         self.assets.load_image("ore_icon", "assets/icons/ore.png")
         self.assets.load_image("gas_icon", "assets/icons/gas.png")
-        self.assets.load_image("organics_icon", "assets/icons/organics.png")
+        self.assets.load_image("organics_icon", "assets/icons/organics.png") #used for organics resource category and farm buildings
         self.assets.load_image("liquid_icon", "assets/icons/liquid.png")
+        self.assets.load_image("plus_icon", "assets/icons/plus-box.png", size=(18, 18))
+        self.assets.load_image("hammer_icon", "assets/icons/hammer.png", size=(10, 10))
 
         # Load planet type icons
         with open("planet_types.json") as f:
             planet_types_data = json.load(f)
         self.assets.load_planets_icons(planet_types_data)
         self.tile_layer_surface = pygame.Surface((WIDTH, HEIGHT))
-        self.state = 'MAIN_MENU'
-        self.tile_info_panel = TileInfoPanel(self.ui_manager, self.assets, pygame.Rect(SCREEN_WIDTH-300, 10, 300, 400))
+        self.notifications = NotificationManager(self.ui_manager, self.screen.get_rect())
+        self.building_manager = BuildingManager()
+        self.tile_info_panel = TileInfoPanel(self.ui_manager, self.assets, pygame.Rect(SCREEN_WIDTH-300, 10, 300, 500))
         # Planet management panel on the left
-        self.planet_mgmt_panel = PlanetManagement(self.ui_manager, self.assets, pygame.Rect(10, 10, 280, 480))
+        self.planet_mgmt_panel = PlanetManagement(self.ui_manager, self.assets, pygame.Rect(10, 10, 280, 480), building_mgmt=self.building_manager, notifications_manager=self.notifications)
+        self.state = 'MAIN_MENU'
+        
 
         # Main menu background image (safe fallback)
         self.menu_bg = None
@@ -54,6 +60,8 @@ class Game:
             self.menu_bg = pygame.transform.scale(bg_surface, (SCREEN_WIDTH, SCREEN_HEIGHT))
         except Exception as e:
             print(f"[Game] Menu background not found or failed to load: {e}")
+        
+        self.time_since_last_second = 0.0
 
         #UI
         # Container for main menu buttons
@@ -155,6 +163,21 @@ class Game:
             manager=self.ui_manager,
             container=self.params_panel
         )
+        # --- Label ---
+        self.empire_name_label = pygame_gui.elements.UILabel(
+            relative_rect=pygame.Rect(20, 180, 150, 30),
+            text="Empire Name:",
+            manager=self.ui_manager,
+            container=self.params_panel
+        )
+
+        # --- Text Entry Field ---
+        self.empire_name_entry = pygame_gui.elements.UITextEntryLine(
+            relative_rect=pygame.Rect(170, 180, 200, 30),
+            manager=self.ui_manager,
+            container=self.params_panel
+        )
+        #self.empire_name_entry.set_text(self.empire_name)
         # Buttons
         self.button_params_start = pygame_gui.elements.UIButton(
             relative_rect=pygame.Rect(240, 260, 180, 36),
@@ -203,6 +226,9 @@ class Game:
                     size_option = self.dropdown_galaxy_size.selected_option
                     star_density = int(self.slider_star_density.get_current_value())
                     nebula_density = int(self.slider_nebula_density.get_current_value())
+                    empire_name = self.empire_name_entry.get_text().strip()
+                    if not empire_name:
+                        empire_name = "Unnamed Empire"  # Fallback
                     # Map size mapping
                     if size_option == 'Small':
                         map_width, map_height = 24, 18
@@ -225,6 +251,43 @@ class Game:
                         'map_height': map_height
                     }
                     self.params_panel.hide()
+                    #setting up empires and players seetings
+                    player = Player()
+                    self.player=player #change this in the future
+                    empire=Empire(player, name=empire_name, color=(255,255,0))
+                    self.empires=[empire]
+                    def get_random_start_tile():
+                        """Return a random valid tile for an empire start."""
+                        valid_tiles = [
+                            h for h in self.map.all_hexes()
+                            if h.feature == "star_system"  # or h.feature in ['star_system', 'habitable'] depending on your logic
+                            and h.owner is None
+                        ]
+
+                        if not valid_tiles:  # fallback if no star systems; later create an UI window : go back (to map settings), other options...
+                            valid_tiles = [
+                                h for h in self.map.all_hexes()
+                                if h.feature not in ("nebula", "void")
+                                and h.owner is None
+                            ]
+
+                        return random.choice(valid_tiles) if valid_tiles else None
+                    
+                    start_tile = get_random_start_tile()
+                    if start_tile:
+                        start_tile.owner = empire
+                        empire.home_tile = start_tile
+                        empire.tiles_owned.add(start_tile)
+                        print(f"[GAME - Empire Start] {empire.name} starts at {start_tile.q}, {start_tile.r}")
+                        for planet in start_tile.contents.planets:
+                            planet.is_colonized=True
+
+                        # Optionally mark the tile visually
+                        start_tile.highlight_color = (255, 255, 0)
+                    else:
+                        print(f"[GAME - Warning] No valid start tile found for empire {empire.name} !")
+
+                    self.current_empire=empire
                     self.state = 'IN_GAME'
             
             # Forward UI events to planet management (e.g., build/apply buttons)
@@ -269,12 +332,26 @@ class Game:
     def update(self, time_delta):
         # Always update the UI manager each frame (mandatory)
         self.ui_manager.update(time_delta)
+
+        self.time_since_last_second += time_delta
         
         # Update tooltips if in game
         if self.state == 'IN_GAME':
             mouse_pos = pygame.mouse.get_pos()
             self.tile_info_panel.update_tooltips(mouse_pos)
             self.planet_mgmt_panel.update_tooltips(mouse_pos)
+            if self.time_since_last_second >= 1.0:  # one second passed
+                self.notifications.update()
+                for empire in self.empires:
+                    for tile in empire.tiles_owned:
+                        if tile.feature=='star_system':
+                            for p in tile.contents.planets:
+                                finished_slots = p.progress_all_construction(p.get_total_industry_points())
+                                for slot in finished_slots:
+                                    # Optional: trigger UI update, log, or notifications
+                                    print(f"{slot.building.name} completed on {p.name}")
+                self.time_since_last_second -= 1.0  # reset counter but keep any leftover
+
 
     def draw(self):
         if self.state == 'MAIN_MENU':
@@ -309,6 +386,6 @@ class Game:
 
             # Draw your tile map onto the cached surface
             center = (WIDTH // 2, HEIGHT // 2)
-            self.map.draw(self.tile_layer_surface, center, self.assets, self.frame_count, self.player, self.camera)
+            self.map.draw(self.tile_layer_surface, center, self.assets, self.frame_count, self.player, self.camera, self.current_empire)
 
             self.redraw_tiles = False  # Only redraw when something changes

@@ -4,6 +4,7 @@ import config
 import random
 import json
 from pygame.math import Vector2
+from world import *
 
 RESOURCE_TYPES = ["ore", "gas", "liquid", "organics"]
 SPECIAL_FEATURES = ["star_system", "nebula", "asteroid_field", "black_hole", "empty"]
@@ -21,200 +22,227 @@ def random_resource():
     t = random.choice(RESOURCE_TYPES)
     return t, random.choice(RESOURCE_NAMES_BY_TYPE[t])
 
+class Slot:
+    def __init__(self, slot_type="empty", building=None):
+        """
+        :param slot_type: "farm", "mine", "refine", "industry" or "empty"
+        :param building: Building object currently in the slot (under construction or completed)
+        """
+        self.type = slot_type
+        self.building = building  # None if empty
+        self.status = "empty" if building is None else ("under_construction" if building.under_construction else "built")
+
+    def start_building(self, building, planet_industry_points):
+        """
+        Assign a building to this slot and start construction.
+        """
+        if self.building is not None:
+            raise ValueError("Slot already has a building.")
+        self.building = building
+        building.start_construction(planet_industry_points)
+        self.type = building.slot_type
+        self.status = "under_construction"
+
+    def progress_construction(self, planet_industry_points):
+        """
+        Progress the building construction. Returns True if finished this turn.
+        """
+        if self.building and self.building.under_construction:
+            finished = self.building.progress_construction(planet_industry_points)
+            if finished:
+                self.status = "built"
+            return finished
+        return False
+
+    def is_empty(self):
+        return self.building is None
+
+    def __repr__(self):
+        return f"Slot type={self.type} status={self.status} building={self.building}"
+
 class Planet:
-    def __init__(self, name=None, star_system=None):
+    def __init__(self, name=None, star_system=None, population=None):
         self.name = name or self.generate_name()
-        self.star_system=None
-        # Assign planet type based on weighted probabilities
+        self.star_system = star_system
+
+        # --- Planet type ---
         self.planet_type = self.generate_planet_type()
         planet_data = PLANET_TYPES[self.planet_type]
-        
-        # Initialize planet bonuses and properties
+
         self.resource_bonus = planet_data.get("resource_bonus", {})
         self.refine_bonus = planet_data.get("refine_bonus", {})
         self.name_display = planet_data.get("name", self.planet_type.title())
         self.description = planet_data.get("description", "")
         self.rarity = planet_data.get("rarity", "common")
-        self.icon_path = planet_data.get("icon", "assets/resources/question.png")
         self.colonization_cost = planet_data.get("colonization_cost", {"credits": 100, "resources": {}})
         self.habitability = planet_data.get("habitability", 0.5)
         self.defense_bonus = planet_data.get("defense_bonus", 0.0)
-        
-        # Planet starts uncolonized - no resource assigned yet
+
+        # --- Colonization / Resources ---
         self.current_resource_type = None
         self.current_resource = None
         self.mode = None  # "mine" or "refine"
         self.can_refine = False
-        self.is_colonized = False       
-        
-        self.population = random.randint(1,20) # 1-20 billion for slot count and scale
-        self.slots = self.population # For now, same as population
-        self.used_slots=0
-        # Basic planet management fields
-        self.buildings = {"farm": 0, "mine": 0, "industry": 0, "forge": 0}
+        self.is_colonized = False
+
+        # --- Population / Slots ---
+        self.population_max = population or random.randint(1, 20)
+        self.slots = [Slot() for _ in range(self.population_max)]
+
+        # --- Industry / Defense ---
+        self.industry_points = 10
         self.defense_value = 0
 
+        # --- Construction / Patents placeholders ---
+        self.resource_mined = None
+        self.resource_refined = None
+
+    # ---------------- Name / Type ----------------
     def generate_name(self):
-        # Very simple placeholder name gen
-        return "Planet-" + str(random.randint(1000,9999))
-    
+        return f"Planet-{random.randint(1000, 9999)}"
+
     def generate_planet_type(self):
-        """Generate planet type with weighted probabilities based on rarity."""
         weights = {}
         for planet_type, data in PLANET_TYPES.items():
             rarity = data.get("rarity", "common")
-            if rarity == "common":
-                weights[planet_type] = 0.25
-            elif rarity == "uncommon":
-                weights[planet_type] = 0.15
-            elif rarity == "rare":
-                weights[planet_type] = 0.05
-            elif rarity == "very_rare":
-                weights[planet_type] = 0.02
-            else:
-                weights[planet_type] = 0.1  # Default
-        
+            weights_map = {"common": 0.25, "uncommon": 0.15, "rare": 0.05, "very_rare": 0.02}
+            weights[planet_type] = weights_map.get(rarity, 0.1)
         return random.choices(list(weights.keys()), weights=list(weights.values()))[0]
-    
+
+    # ---------------- Colonization ----------------
     def colonize(self, resource_type, resource_name, mode="mine"):
-        """Colonize the planet and assign it to mine/refine a specific resource."""
         self.current_resource_type = resource_type
         self.current_resource = resource_name
         self.mode = mode
-        self.can_refine = (mode == "refine")
+        self.can_refine = mode == "refine"
         self.is_colonized = True
-    
-    def get_preferred_resources(self):
-        """Get the list of resources this planet type is optimized for."""
-        preferred_resources = []
-        if self.resource_bonus:
-            for resource_type, bonus_data in self.resource_bonus.items():
-                preferred_tiers = bonus_data["tiers"]
-                tier_resources = [name for name, data in RESOURCES_DATA.items() 
-                                if data["resource_type"] == resource_type and data["tier"] in preferred_tiers]
-                preferred_resources.extend(tier_resources)
-        return preferred_resources
-    
-    def get_resource_yield_bonus(self):
-        """Get the resource yield bonus for this planet's current resource type and tier."""
-        if not self.is_colonized or not self.current_resource_type:
-            return 1.0
-            
-        if self.current_resource_type in self.resource_bonus:
-            bonus_data = self.resource_bonus[self.current_resource_type]
-            resource_tier = RESOURCES_DATA[self.current_resource]["tier"]
-            if resource_tier in bonus_data["tiers"]:
-                return bonus_data["multiplier"]
-        return 1.0
-    
-    def get_refine_bonus(self):
-        """Get the refining bonus for this planet's current resource type and tier."""
-        if not self.is_colonized or not self.current_resource_type:
-            return 1.0
-            
-        if self.current_resource_type in self.refine_bonus:
-            bonus_data = self.refine_bonus[self.current_resource_type]
-            resource_tier = RESOURCES_DATA[self.current_resource]["tier"]
-            if resource_tier in bonus_data["tiers"]:
-                return bonus_data["multiplier"]
-        return 1.0
 
-    def add_used_slot(self):
-        """Add a used slot if there's space available. Returns True if successful, False otherwise."""
-        if self.used_slots < self.slots:
-            self.used_slots += 1
-            return True
-        return False
-    
-    def remove_used_slot(self):
-        """Remove a used slot if there are any. Returns True if successful, False otherwise."""
-        if self.used_slots > 0:
-            self.used_slots -= 1
-            return True
-        return False
-    
+    # ---------------- Slots ----------------
     def get_available_slots(self):
-        """Return the number of available slots."""
-        return self.slots - self.used_slots
+        return [s for s in self.slots if s.is_empty()]
 
-    def __repr__(self):
-        if not self.is_colonized:
-            return f"[{self.name_display} Uncolonized], Pop={self.population}B, Slots={self.used_slots}/{self.slots}"
-        else:
-            mode_str = "Refinery" if self.can_refine else "Mine"
-            return f"[{self.name_display} {mode_str}: {self.current_resource}], Pop={self.population}B, Slots={self.used_slots}/{self.slots}"
+    def get_used_slots(self):
+        return [s for s in self.slots if not s.is_empty()]
 
+    def start_building_in_slot(self, building_key, building_manager, planet_industry_points):
+        for slot in self.get_available_slots():
+            building = building_manager.create_building(building_key)
+            slot.start_building(building, planet_industry_points)
+            return f"Started construction: {building.name}"
+        return f"No empty slot available to build {building_key.title()}"
+
+    def progress_all_construction(self, planet_industry_points):
+        finished_slots = []
+        for slot in self.get_used_slots():
+            if slot.progress_construction(planet_industry_points):
+                finished_slots.append(slot)
+        return finished_slots
+
+    def get_active_buildings_by_type(self, building_type):
+        return [s.building for s in self.slots if s.type == building_type and s.status == "built"]
+
+    def get_total_industry_points(self):
+        total = self.industry_points
+        total += sum(100 for s in self.slots if s.type == "industry" and s.status == "built")
+        return total
+
+    # ---------------- Resource Extraction ----------------
     def extract_resources(self):
-        """Extract or refine resources depending on planet mode."""
-        with open("refined.json") as f:
-            REFINED_DATA = json.load(f)
         if not self.is_colonized or not self.star_system:
             return 0
 
         owner = getattr(self.star_system.hextile, "owner", None)
-        if not owner:
+        if not owner or not self.current_resource:
             return 0
 
-        tech_level = 1.0  # For future scaling
+        tech_level = 1.0
         total_yield = 0.0
+        owner_patents = getattr(owner, "patents", [])
 
-        # --- MINING MODE ---
-        if self.mode == "mine" and self.current_resource:
-            mine_count = self.buildings.get("mine", 0)
+        # Mining Mode
+        if self.mode == "mine":
+            mine_count = len([s for s in self.slots if s.type == "mine" and s.status == "built"])
             if mine_count <= 0:
                 return 0
+            total_yield = mine_count * tech_level * self.get_resource_yield_bonus()
+            total_yield = self.apply_patents(total_yield, owner_patents, target_type="mine")
 
-            base_yield = mine_count * tech_level
-            bonus = self.get_resource_yield_bonus()
-            total_yield = base_yield * bonus
-
-            owner.resources[self.current_resource] = (
-                owner.resources.get(self.current_resource, 0) + total_yield
-            )
+            owner.resources[self.current_resource] = owner.resources.get(self.current_resource, 0) + total_yield
             self.resource_mined = self.current_resource
             return total_yield
 
-        # --- REFINING MODE ---
-        elif self.mode == "refine" and self.current_resource:
-            industry_count = self.buildings.get("industry", 0)
-            if industry_count <= 0:
+        # Refining Mode
+        elif self.mode == "refine":
+            refine_count = len([s for s in self.slots if s.type == "refine" and s.status == "built"])
+            if refine_count <= 0:
                 return 0
+            total_yield = refine_count * tech_level * self.get_refine_bonus()
+            total_yield = self.apply_patents(total_yield, owner_patents, target_type="refine")
 
-            base_yield = industry_count * tech_level
-            bonus = self.get_refine_bonus()
-            total_yield = base_yield * bonus
-
-            # Fetch refined material data
+            # Consume resources and produce refined output
+            with open("refined.json") as f:
+                REFINED_DATA = json.load(f)
             refined_info = REFINED_DATA.get(self.current_resource)
             if not refined_info:
                 print(f"[WARN] {self.current_resource} not found in refined data.")
                 return 0
 
-            # Check if required input resources exist and are available
             input_resources = refined_info.get("resources_needed", [])
-            can_refine = True
-            for res in input_resources:
-                if owner.resources.get(res, 0) < total_yield:
-                    can_refine = False
-                    break
+            if isinstance(input_resources, list):
+                input_resources = {res: 1 for res in input_resources}
 
-            if not can_refine:
-                print(f"[INFO] Not enough input materials to refine {self.current_resource}.")
-                return 0
+            for res_name, ratio in input_resources.items():
+                required = total_yield * ratio
+                if owner.resources.get(res_name, 0) < required:
+                    print(f"[INFO] Not enough {res_name} to refine {self.current_resource}")
+                    return 0
 
-            # Consume input resources
-            for res in input_resources:
-                owner.resources[res] -= total_yield
+            for res_name, ratio in input_resources.items():
+                owner.resources[res_name] -= total_yield * ratio
 
-            # Add refined product
-            owner.resources[self.current_resource] = (
-                owner.resources.get(self.current_resource, 0) + total_yield
-            )
-
+            owner.resources[self.current_resource] = owner.resources.get(self.current_resource, 0) + total_yield
             self.resource_refined = self.current_resource
             return total_yield
 
         return 0
+
+    def apply_patents(self, yield_amount, patents, target_type):
+        resource_type = RESOURCES_DATA[self.current_resource]["resource_type"]
+        resource_tier = RESOURCES_DATA[self.current_resource]["tier"]
+        for patent in patents:
+            if patent.is_usable_by(self.star_system.hextile.owner) and patent.target_building_type == target_type:
+                yield_amount = patent.apply_bonus(yield_amount, resource_type, resource_tier)
+        return yield_amount
+
+    # ---------------- Bonuses ----------------
+    def get_resource_yield_bonus(self):
+        if not self.is_colonized or not self.current_resource_type:
+            return 1.0
+        bonus_data = self.resource_bonus.get(self.current_resource_type)
+        if not bonus_data:
+            return 1.0
+        tier = RESOURCES_DATA[self.current_resource]["tier"]
+        return bonus_data["multiplier"] if tier in bonus_data["tiers"] else 1.0
+
+    def get_refine_bonus(self):
+        if not self.is_colonized or not self.current_resource_type:
+            return 1.0
+        bonus_data = self.refine_bonus.get(self.current_resource_type)
+        if not bonus_data:
+            return 1.0
+        tier = RESOURCES_DATA[self.current_resource]["tier"]
+        return bonus_data["multiplier"] if tier in bonus_data["tiers"] else 1.0
+
+    # ---------------- Representations ----------------
+    def __repr__(self):
+        used = len(self.get_used_slots())
+        total = len(self.slots)
+        if not self.is_colonized:
+            return f"[{self.name_display} Uncolonized], Pop={self.population_max}B, Slots={used}/{total}"
+        else:
+            mode_str = "Refinery" if self.can_refine else "Mine"
+            return f"[{self.name_display} {mode_str}: {self.current_resource}], Pop={self.population_max}B, Slots={used}/{total}"
+
 
 class StarSystem:
     def __init__(self, hextile=None):
@@ -324,23 +352,26 @@ class GalaxyMap:
     def all_hexes(self):
         return self.grid
 
-    def draw(self, surface, center, assets, frame_count, player, camera):
+    def draw(self, surface, center, assets, frame_count, player, camera, current_empire):
         cam_offset = camera.get_offset() if camera else (0,0)
         print(f"[MAP] cam_offset {cam_offset}")
         # Draw borders for all hexes
         for hex in self.grid:
             points = hex.polygon(center, config.HEX_SIZE, cam_offset)
+            if hex.owner == current_empire:
+                # Optional: Draw a dot or color for star system centers
+                if hex.feature == 'star_system':
+                    star_x, star_y = hex.hex_to_pixel(center, config.HEX_SIZE, cam_offset)
+                    pygame.draw.circle(surface, config.YELLOW, (int(star_x), int(star_y)), 4)
+                elif hex.feature == 'nebula':
+                    cx, cy = hex.hex_to_pixel(center, config.HEX_SIZE, cam_offset)
+                    pygame.draw.circle(surface, config.LIGHT_BLUE, (int(cx), int(cy)), 4)
+                elif hex.feature == 'asteroid_field':
+                    cx, cy = hex.hex_to_pixel(center, config.HEX_SIZE, cam_offset)
+                    pygame.draw.circle(surface, config.GRAY, (int(cx), int(cy)), 4)
+                elif hex.feature == 'black_hole':
+                    cx, cy = hex.hex_to_pixel(center, config.HEX_SIZE, cam_offset)
+                    pygame.draw.circle(surface, config.BLACK, (int(cx), int(cy)), 4)
+            else :
+                pygame.draw.polygon(surface, config.FOG_COLOR, points)
             pygame.draw.polygon(surface, config.LIGHT_GRAY, points, 1)
-            # Optional: Draw a dot or color for star system centers
-            if hex.feature == 'star_system':
-                star_x, star_y = hex.hex_to_pixel(center, config.HEX_SIZE, cam_offset)
-                pygame.draw.circle(surface, config.YELLOW, (int(star_x), int(star_y)), 4)
-            elif hex.feature == 'nebula':
-                cx, cy = hex.hex_to_pixel(center, config.HEX_SIZE, cam_offset)
-                pygame.draw.circle(surface, config.LIGHT_BLUE, (int(cx), int(cy)), 4)
-            elif hex.feature == 'asteroid_field':
-                cx, cy = hex.hex_to_pixel(center, config.HEX_SIZE, cam_offset)
-                pygame.draw.circle(surface, config.GRAY, (int(cx), int(cy)), 4)
-            elif hex.feature == 'black_hole':
-                cx, cy = hex.hex_to_pixel(center, config.HEX_SIZE, cam_offset)
-                pygame.draw.circle(surface, config.BLACK, (int(cx), int(cy)), 4)
