@@ -127,7 +127,7 @@ class NotificationManager:
 ##############################################################################################################################
 
 class TileInfoPanel(pygame_gui.elements.UIWindow):
-    def __init__(self, ui_manager, assets, rect):
+    def __init__(self, ui_manager, assets, rect, callback_on_planet_click=None):
         super().__init__(
             pygame.Rect(rect),
             manager=ui_manager,
@@ -143,6 +143,8 @@ class TileInfoPanel(pygame_gui.elements.UIWindow):
         self._objects = []
         self.font = pygame.font.SysFont("arial", 16)
         self.tooltip_manager = TooltipManager(self.font)
+        self.callback_on_planet_click = callback_on_planet_click
+        self.planet_buttons = []
         # Preload default icons once using assetsmanager for performance
         self.slots_icon = pygame.image.load(SLOTS_ICON_PLACEHOLDER).convert_alpha()
         self.defense_icon = pygame.image.load(DEFENSE_ICON_PLACEHOLDER).convert_alpha()
@@ -158,11 +160,25 @@ class TileInfoPanel(pygame_gui.elements.UIWindow):
         self.icon_size = 19
         self.icon_gap = 6
 
+        self.selected_planet = None
+        self.halo_image = pygame.image.load("assets/icons/disk-icon-size_32.png").convert_alpha()
+        self.halo_ui = pygame_gui.elements.UIImage(
+            relative_rect=pygame.Rect(-100, -100, 48, 48),  # offscreen by default
+            image_surface=self.halo_image,
+            manager=self.ui_manager,
+            container=self.container
+        )
+        self.halo_ui.hide()
+
 
     def show_info(self, hex_obj):
         self.clear()
         if not hex_obj or hex_obj.feature != "star_system":
             return
+        for button, planet in self.planet_buttons:
+            button.kill()
+        self.planet_buttons.clear()
+        self.slot_icon_rects.clear()
         ss = hex_obj.contents
         # Star system name
         y = 10
@@ -190,6 +206,7 @@ class TileInfoPanel(pygame_gui.elements.UIWindow):
         
         # Clear previous planet icon rects
         self.planet_icon_rects = []
+        self.planet_buttons = []  # <-- for event handling later
         
         for planet in ss.planets:
             this_y = y
@@ -202,20 +219,29 @@ class TileInfoPanel(pygame_gui.elements.UIWindow):
                 # Fallback to question mark if planet icon not found
                 planet_icon_surface = pygame.image.load("assets/resources/question.png").convert_alpha()
             
-            planet_icon = pygame_gui.elements.UIImage(
+            planet_image = pygame_gui.elements.UIImage(
                 relative_rect=planet_rect,
                 image_surface=planet_icon_surface,
                 manager=self.ui_manager,
                 container=self.container
             )
-            
+            self._objects.append(planet_image)
+            # Create a button instead of plain image (so it's clickable)
+            planet_icon_button = pygame_gui.elements.UIButton(
+                relative_rect=planet_rect,
+                text='',  # no text, purely image-based
+                manager=self.ui_manager,
+                container=self.container,
+                object_id=pygame_gui.core.ObjectID(class_id='@planet_icon')
+            )
+            planet_icon_button.set_image(planet_icon_surface)
+
+            # Store both for later (button + planet)
             # Store planet info for tooltip
-            self.planet_icon_rects.append({
-                'rect': planet_rect,
-                'planet': planet
-            })
-            
-            self._objects.append(planet_icon)
+            self.planet_icon_rects.append({'rect': planet_rect, 'planet': planet})
+            self.planet_buttons.append((planet_icon_button, planet))  # shared handling with text buttons
+            self._objects.append(planet_icon_button)
+
             # 2. Planet name and type, above and to right of resource icon
             planet_name = pygame_gui.elements.UILabel(
                 relative_rect=pygame.Rect(50, this_y, 200, 18),
@@ -288,7 +314,7 @@ class TileInfoPanel(pygame_gui.elements.UIWindow):
             for t in slot_types_order:
                 grouped_slots.extend([s for s in planet.slots if s.type == t])
 
-            self.slot_icon_rects.clear()
+            
             for i, slot in enumerate(grouped_slots):
                 row = i // max_per_row
                 col = i % max_per_row
@@ -367,6 +393,29 @@ class TileInfoPanel(pygame_gui.elements.UIWindow):
         """Draw tooltips on the given surface."""
         if self.visible:
             self.tooltip_manager.draw(surface)
+    
+    def handle_events(self, event):
+        if event.type == pygame.USEREVENT and event.user_type == pygame_gui.UI_BUTTON_PRESSED:
+            for button, planet in self.planet_buttons:
+                if event.ui_element == button and self.callback_on_planet_click:
+                    self.callback_on_planet_click(planet)
+                if event.ui_element == button :
+                     self.set_selected_planet(planet)
+    
+    def set_selected_planet(self, planet):
+        self.selected_planet = planet
+
+        # Find its position in the list
+        for (button, p) in self.planet_buttons:
+            if p == planet:
+                rect = button.relative_rect
+                # Move halo just behind the icon
+                self.halo_ui.set_relative_position((rect.x - 8, rect.y - 8))
+                self.halo_ui.show()
+                return
+
+        # If not found, hide halo
+        self.halo_ui.hide()
 
     def clear(self):
         for obj in getattr(self, '_objects', []):
@@ -374,6 +423,7 @@ class TileInfoPanel(pygame_gui.elements.UIWindow):
         self._objects = []
         self.planet_icon_rects = []
         self.tooltip_manager.clear_tooltip()
+        self.halo_ui.hide()
 
     def hide(self):
         self.clear()
@@ -387,6 +437,7 @@ class PlanetManagement:
             manager=ui_manager,
             visible=False
         )
+        self.rect_input=rect
         self.ui_manager = ui_manager
         self.assets = assets
         self._objects = []
@@ -400,22 +451,27 @@ class PlanetManagement:
         self.selected_category = None
         self.selected_tier = None
         self.selected_resource = None #the resource the panet will mine/refine
+        self._objects = []
+
+    def show_info(self):
         # Header
         self.header = pygame_gui.elements.UILabel(
-            relative_rect=pygame.Rect(10, 10, rect.width - 20, 28),
+            relative_rect=pygame.Rect(10, 10, self.rect_input.width - 20, 28),
             text='Planet Management',
             manager=self.ui_manager,
             container=self.panel
         )
+        self._objects.append(self.header)
         # Planet name
         self.planet_name_lbl = pygame_gui.elements.UILabel(
-            relative_rect=pygame.Rect(10, 40, rect.width - 20, 24),
+            relative_rect=pygame.Rect(10, 40, self.rect_input.width - 20, 24),
             text='-'
             ,manager=self.ui_manager,
             container=self.panel
         )
+        self._objects.append(self.planet_name_lbl)
         y=70
-        # Resource dropdown
+        # MOde selection
         self.mode_lbl = pygame_gui.elements.UILabel(
             relative_rect=pygame.Rect(10, y, 100, 24),
             text='Mode : ',
@@ -423,6 +479,7 @@ class PlanetManagement:
             container=self.panel,
             object_id='@left_label'
         )
+        self._objects.append(self.mode_lbl)
         self.mode_icons = {
             'mine': pygame_gui.elements.UIImage(
                 relative_rect=pygame.Rect(80,y, 48, 48),
@@ -437,6 +494,8 @@ class PlanetManagement:
                 container=self.panel
             ),
         }
+        self._objects.append(self.mode_icons['mine'])
+        self._objects.append(self.mode_icons['refine'])
         # Current selection state
         self.mode_selected = 'mine'
         # Store mode info for tooltip
@@ -449,8 +508,7 @@ class PlanetManagement:
                     'mode': 'refine'
         })
         y+=50
-
-        # Resource dropdown
+        # Resource selection
         self.resource_lbl = pygame_gui.elements.UILabel(
             relative_rect=pygame.Rect(10, y, 100, 24),
             text='Resource',
@@ -458,6 +516,7 @@ class PlanetManagement:
             container=self.panel,
             object_id='@left_label'
         )
+        self._objects.append(self.resource_lbl)
         # Resource categories row
         x = 10
         size = 48
@@ -472,72 +531,82 @@ class PlanetManagement:
                 container=self.panel
             )
             self.resource_category_buttons[cat] = btn
+            self._objects.append(btn)
             x += size + spacing
         y+=30
         #resources by caterories (see below)
         y+=70
         self.apply_resource_btn = pygame_gui.elements.UIButton(
-            relative_rect=pygame.Rect(10, y, rect.width - 20, 28),
+            relative_rect=pygame.Rect(10, y, self.rect_input.width - 20, 28),
             text='Apply Extraction/Refining',
             manager=self.ui_manager,
             container=self.panel
         )
+        self._objects.append(self.apply_resource_btn)
         y+=30
         # Buildings section
         self.build_lbl = pygame_gui.elements.UILabel(
-            relative_rect=pygame.Rect(10, y, rect.width - 20, 22),
+            relative_rect=pygame.Rect(10, y, self.rect_input.width - 20, 22),
             text='Constructions',
             manager=self.ui_manager,
             container=self.panel
         )
+        self._objects.append(self.build_lbl)
         y+=25
         self.btn_build_farm = pygame_gui.elements.UIButton(
-            relative_rect=pygame.Rect(10, y, (rect.width - 30)//2, 28),
+            relative_rect=pygame.Rect(10, y, (self.rect_input.width - 30)//2, 28),
             text='Build Farm',
             manager=self.ui_manager,
             container=self.panel
         )
+        self._objects.append(self.btn_build_farm)
         self.btn_build_mine = pygame_gui.elements.UIButton(
-            relative_rect=pygame.Rect(20 + (rect.width - 30)//2, y, (rect.width - 30)//2, 28),
+            relative_rect=pygame.Rect(20 + (self.rect_input.width - 30)//2, y, (self.rect_input.width - 30)//2, 28),
             text='Build Mine',
             manager=self.ui_manager,
             container=self.panel
         )
+        self._objects.append(self.btn_build_mine)
         y+=30
         self.btn_build_industry = pygame_gui.elements.UIButton(
-            relative_rect=pygame.Rect(10, y, (rect.width - 30)//2, 28),
+            relative_rect=pygame.Rect(10, y, (self.rect_input.width - 30)//2, 28),
             text='Build Industry',
             manager=self.ui_manager,
             container=self.panel
         )
+        self._objects.append(self.btn_build_industry)
         self.btn_build_forge = pygame_gui.elements.UIButton(
-            relative_rect=pygame.Rect(20 + (rect.width - 30)//2, y, (rect.width - 30)//2, 28),
+            relative_rect=pygame.Rect(20 + (self.rect_input.width - 30)//2, y, (self.rect_input.width - 30)//2, 28),
             text='Build Forge',
             manager=self.ui_manager,
             container=self.panel
         )
+        self._objects.append(self.btn_build_forge)
         y+=30
         # Defense section
         self.defense_lbl = pygame_gui.elements.UILabel(
-            relative_rect=pygame.Rect(10, y, rect.width - 20, 22),
+            relative_rect=pygame.Rect(10, y, self.rect_input.width - 20, 22),
             text='Planetary Defense',
             manager=self.ui_manager,
             container=self.panel
         )
+        self._objects.append(self.defense_lbl)
         y+=25
         self.btn_build_defense = pygame_gui.elements.UIButton(
-            relative_rect=pygame.Rect(10, y, rect.width - 20, 28),
+            relative_rect=pygame.Rect(10, y, self.rect_input.width - 20, 28),
             text='Build Defense +1',
             manager=self.ui_manager,
             container=self.panel
         )
+        self._objects.append(self.btn_build_defense)
         # Status line
         self.status_lbl = pygame_gui.elements.UILabel(
-            relative_rect=pygame.Rect(10, 338, rect.width - 20, 22),
+            relative_rect=pygame.Rect(10, 338, self.rect_input.width - 20, 22),
             text='',
             manager=self.ui_manager,
             container=self.panel
         )
+        self._objects.append(self.status_lbl)
 
     def _rebuild_resource_options(self, resources_data):
         # Flatten resource names
@@ -557,13 +626,15 @@ class PlanetManagement:
 
     def show(self, planet, resources_data):
         self.selected_planet = planet
-        self.planet_name_lbl.set_text(f"{planet.name}")
-        # Build resource options
-        #self._rebuild_resource_options(resources_data)
         self.panel.show()
+        self.show_info()
+        self.planet_name_lbl.set_text(f"{planet.name}")
 
     def hide(self):
         self.panel.hide()
+        for obj in getattr(self, '_objects', []):
+            obj.kill()
+        self._objects = []
         self.selected_planet = None
         self.tooltip_manager.clear_tooltip()
     

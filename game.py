@@ -22,9 +22,9 @@ class Game:
         self.map = GalaxyMap(MAP_WIDTH, HEIGHT)
         self.camera = Camera(screen_width=MAP_WIDTH, screen_height=SCREEN_HEIGHT, world_width=self.map.width, world_height=self.map.height)
         with open("resources.json") as f:
-            resource_data = json.load(f)
+            self.resource_data = json.load(f)
         self.assets = AssetsManager()
-        self.assets.load_resource_icons(resource_data)
+        self.assets.load_resource_icons(self.resource_data)
         with open("refined.json") as f:
             refined_data = json.load(f)
         self.assets.load_resource_icons(refined_data)
@@ -47,7 +47,7 @@ class Game:
         self.tile_layer_surface = pygame.Surface((WIDTH, HEIGHT))
         self.notifications = NotificationManager(self.ui_manager, self.screen.get_rect())
         self.building_manager = BuildingManager()
-        self.tile_info_panel = TileInfoPanel(self.ui_manager, self.assets, pygame.Rect(SCREEN_WIDTH-300, 10, 300, 500))
+        self.tile_info_panel = TileInfoPanel(self.ui_manager, self.assets, pygame.Rect(SCREEN_WIDTH-300, 10, 300, 500), callback_on_planet_click=self.show_planet_panel)
         # Planet management panel on the left
         self.planet_mgmt_panel = PlanetManagement(self.ui_manager, self.assets, pygame.Rect(10, 10, 280, 480), building_mgmt=self.building_manager, notifications_manager=self.notifications)
         self.state = 'MAIN_MENU'
@@ -192,6 +192,9 @@ class Game:
             container=self.params_panel
         )
 
+    def show_planet_panel(self, planet):
+        self.planet_mgmt_panel.show(planet, self.resource_data)
+
     def run(self):
         while self.running:
             time_delta = self.clock.tick(60) / 1000.0  # seconds passed since last frame
@@ -290,38 +293,45 @@ class Game:
                     self.current_empire=empire
                     self.state = 'IN_GAME'
             
-            # Forward UI events to planet management (e.g., build/apply buttons)
-            if hasattr(self, 'planet_mgmt_panel'):
-                try:
-                    with open("resources.json") as f:
-                        resource_data = json.load(f)
-                except Exception:
-                    resource_data = {}
-                self.planet_mgmt_panel.process_event(event, resource_data)
-            
-            if self.state == 'IN_GAME' and event.type == pygame.MOUSEBUTTONDOWN and event.button == 1:
-                mouse_pos = pygame.mouse.get_pos()
+            if self.state == 'IN_GAME':
+                if event.type == pygame.MOUSEBUTTONDOWN and event.button == 1:
+                    mouse_pos = pygame.mouse.get_pos()
 
-                # Skip map clicks if mouse over any UI element
-                if self.ui_manager.get_hovering_any_element():
-                    continue  # Let pygame_gui handle it
+                    # Skip map clicks if mouse over any UI element
+                    if self.ui_manager.get_hovering_any_element():
+                        continue  # Let pygame_gui handle it
 
-                # Otherwise, process map click
-                center = (WIDTH // 2, HEIGHT // 2)
-                cam_offset = self.camera.get_offset() if self.camera else (0, 0)
-                found = None
-                for h in self.map.all_hexes():
-                    if h.contains_point(mouse_pos, center, pixel_offset=cam_offset):
-                        found = h
-                        break
+                    # Otherwise, process map click
+                    center = (WIDTH // 2, HEIGHT // 2)
+                    cam_offset = self.camera.get_offset() if self.camera else (0, 0)
+                    found = None
+                    for h in self.map.all_hexes():
+                        if h.contains_point(mouse_pos, center, pixel_offset=cam_offset):
+                            found = h
+                            break
 
-                if found:
-                    self.tile_info_panel.show_info(found)
-                    if found.feature == 'star_system' and found.contents.planets:
-                        self.planet_mgmt_panel.show(found.contents.planets[0], resource_data)
-                else:
-                    self.tile_info_panel.hide()
-                    self.planet_mgmt_panel.hide()
+                    if found:
+                        self.tile_info_panel.show_info(found)
+                        if found.feature == 'star_system' and found.contents.planets:
+                            self.planet_mgmt_panel.show(found.contents.planets[0], self.resource_data)
+                    else:
+                        self.tile_info_panel.hide()
+                        self.planet_mgmt_panel.hide()
+                
+                if event.type == pygame.MOUSEBUTTONDOWN and event.button == 3:
+                    if self.tile_info_panel.visible:
+                        self.tile_info_panel.hide()
+                        self.tile_info_panel.visible=False
+                    if self.planet_mgmt_panel.panel.visible:
+                        self.planet_mgmt_panel.panel.visible=False
+                        self.planet_mgmt_panel.hide()
+                
+                if event.type == pygame.USEREVENT and event.user_type == pygame_gui.UI_BUTTON_PRESSED:
+                    if self.tile_info_panel:
+                        self.tile_info_panel.handle_events(event)
+                    # Forward UI events to planet management (e.g., build/apply buttons)
+                    if hasattr(self, 'planet_mgmt_panel'):
+                        self.planet_mgmt_panel.process_event(event, self.resource_data)
 
         keys = pygame.key.get_pressed()
         if self.camera.move(keys):

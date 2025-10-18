@@ -156,6 +156,18 @@
             "shape": "rectangle",
             "shadow_width": 2
         }
+    },
+    "@planet_icon": {
+        "colours": {
+        "normal_bg": "#00000000",
+        "hovered_bg": "#00000000",
+        "disabled_bg": "#00000000",
+        "selected_bg": "#00000000"
+        },
+        "misc": {
+        "border_width": "0",
+        "shape": "rectangle"
+        }
     }
 
   }

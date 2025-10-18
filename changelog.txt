@@ -1,3 +1,8 @@
+--commit 11--
+added empires color border
+UI bugs correction
+selected planets have now an halo in the tile info pannel
+UI panels now close when right-click
 --commit 10--
 fog of war
 empires location

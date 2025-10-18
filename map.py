@@ -372,6 +372,13 @@ class GalaxyMap:
                 elif hex.feature == 'black_hole':
                     cx, cy = hex.hex_to_pixel(center, config.HEX_SIZE, cam_offset)
                     pygame.draw.circle(surface, config.BLACK, (int(cx), int(cy)), 4)
+                pygame.draw.polygon(surface, current_empire.color, points, 1)
             else :
                 pygame.draw.polygon(surface, config.FOG_COLOR, points)
-            pygame.draw.polygon(surface, config.LIGHT_GRAY, points, 1)
+                pygame.draw.polygon(surface, config.LIGHT_GRAY, points, 1)
+        
+        for hex in self.grid:
+            points = hex.polygon(center, config.HEX_SIZE, cam_offset)
+            if hex.owner == current_empire:
+                pygame.draw.polygon(surface, current_empire.color, points, 1)
+            
