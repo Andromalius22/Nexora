@@ -307,7 +307,7 @@ class TileInfoPanel(pygame_gui.elements.UIWindow):
             self._objects.append(defense_text)
             y += 40
             max_per_row = 10
-            slot_types_order = ["farm", "mine", "refine", "industry", "empty"]
+            slot_types_order = ["farm", "mine", "refine", "industry", "energy", "empty"]
             
             # Flatten slots grouped by type
             grouped_slots = []
@@ -424,6 +424,7 @@ class TileInfoPanel(pygame_gui.elements.UIWindow):
         self.planet_icon_rects = []
         self.tooltip_manager.clear_tooltip()
         self.halo_ui.hide()
+        self.selected_planet=None
 
     def hide(self):
         self.clear()
@@ -454,6 +455,9 @@ class PlanetManagement:
         self._objects = []
 
     def show_info(self):
+        for obj in getattr(self, '_objects', []):
+            obj.kill()
+        self._objects = []
         # Header
         self.header = pygame_gui.elements.UILabel(
             relative_rect=pygame.Rect(10, 10, self.rect_input.width - 20, 28),
@@ -524,12 +528,13 @@ class PlanetManagement:
         y+=30
 
         for cat in ['ore', 'gas', 'liquid', 'organics']:
-            btn = pygame_gui.elements.UIImage(
-                relative_rect=pygame.Rect(x, y, size, size),
-                image_surface=self.assets.get(f"{cat}_icon"),
-                manager=self.ui_manager,
+            btn = pygame_gui.elements.UIImage( 
+                relative_rect=pygame.Rect(x, y, size, size), 
+                image_surface=self.assets.get(f"{cat}_icon"), 
+                manager=self.ui_manager, 
                 container=self.panel
             )
+
             self.resource_category_buttons[cat] = btn
             self._objects.append(btn)
             x += size + spacing
@@ -727,9 +732,8 @@ class PlanetManagement:
             x += size + spacing
 
 
-    def process_event(self, event, resources_data):
-        if event.type == pygame_gui.UI_BUTTON_PRESSED and self.selected_planet:
-            planet = self.selected_planet
+    def process_event(self, event, resources_data, planet):
+        if event.type == pygame_gui.UI_BUTTON_PRESSED:
             planet_industry_points = planet.get_total_industry_points()
             msg=' '
             
@@ -780,4 +784,207 @@ class PlanetManagement:
                     self.selected_planet.current_resource=self.selected_resource
                     return
 
+class SlotsManagement:
+    def __init__(self, ui_manager, assets, rect, notifications_manager=None, building_mgmt=None):
+        self.panel = pygame_gui.elements.UIPanel(
+            relative_rect=rect,
+            starting_height=1,
+            manager=ui_manager,
+            visible=False
+        )
+        self.ui_manager = ui_manager
+        self.assets = assets
+        self._objects = []
+        self.selected_planet = None
+        self.font = pygame.font.SysFont("arial", 16)
+        self.tooltip_manager = TooltipManager(self.font)
+        self.notifications= notifications_manager
+        self.building_mgmt=building_mgmt
 
+        self.icon_size = 19
+        self.icon_gap = 6
+
+        self.slot_icon_rect=[] #for tooltips
+    
+    def show_info(self, planet):
+        for obj in getattr(self, '_objects', []):
+            obj.kill()
+        self._objects = []
+        self.tooltip_manager.clear_tooltip()
+        self.slot_icon_rect = []
+        title = pygame_gui.elements.UILabel(
+            relative_rect=pygame.Rect(self.panel.relative_rect.width/4, 5, 150, 30),
+            text='Slots management',
+            manager=self.ui_manager,
+            container=self.panel
+        )
+        self._objects.append(title)
+        # Dynamic stacking
+        current_y = 40
+        for slot_type in ["farm", "mine", "refine", "industry", "energy"]:
+            consumed_height = self._display_slots_row(planet, slot_type, current_y)
+            current_y += consumed_height + 10  # 10px gap between sections
+
+    
+    def _display_slots_row(self, planet, slot_type, y_offset):
+        y = y_offset
+        title = pygame_gui.elements.UILabel(
+            relative_rect=pygame.Rect(10, y, 100, 30),
+            text=f"{slot_type}",
+            manager=self.ui_manager,
+            container=self.panel,
+            object_id='@left_label'
+        )
+        self._objects.append(title)
+        y+=30
+
+        max_per_row = 10
+
+        # Filter only type slots
+        type_slots = [s for s in planet.slots if s.type == slot_type]
+
+        # Add utility icons
+        display_slots = type_slots + ["plus_icon", "plus_02_icon", "moins_icon"]
+
+        # Calculate rows needed
+        rows = (len(display_slots) + max_per_row - 1) // max_per_row
+        total_height = rows * (self.icon_size + self.icon_gap)
+
+        for i, slot in enumerate(display_slots):
+            row = i // max_per_row
+            col = i % max_per_row
+            rect = pygame.Rect(
+                20 + col * (self.icon_size + self.icon_gap),
+                y + row * (self.icon_size + self.icon_gap),
+                self.icon_size,
+                self.icon_size
+            )
+
+            # Handle special icons
+            # Skip "plus_icon" if no capacity left
+            # Before creating the UIImage
+            if slot in ("plus_icon", "plus_02_icon"):
+                # Skip the plus icons if no empty slots remain
+                if not planet.get_available_slots():
+                    continue  # no space left, don't show plus icon
+            if slot in ("plus_icon", "plus_02_icon", "moins_icon"):
+                icon_surface = self.assets.get(slot)
+                icon_image = pygame_gui.elements.UIImage(
+                    relative_rect=rect,
+                    image_surface=icon_surface,
+                    manager=self.ui_manager,
+                    container=self.panel
+                )
+                self._objects.append(icon_image)
+
+                # Define tooltip and action
+                tooltip_data = {
+                    "plus_icon": ("enough space for one more slot", None),
+                    "plus_02_icon": (f"click to build one {slot_type}", "add_slot"),
+                    "moins_icon": (f"click to remove one {slot_type}", "remove_slot"),
+                }
+                tooltip, action = tooltip_data[slot]
+                self.slot_icon_rect.append({
+                    "rect": rect,
+                    "tooltip": tooltip,
+                    "action": action,
+                    "slot_type": slot_type,
+                })
+                continue
+            # Handle normal slot
+            # Handle real slots
+            icon_surface = self.assets.get(f"{slot_type}_icon").copy()
+
+            # If inactive, tint to grey
+            if not slot.active:
+                grey_surface = pygame.Surface(icon_surface.get_size(), pygame.SRCALPHA)
+                grey_surface.fill((100, 100, 100, 150))  # semi-transparent grey overlay
+                icon_surface.blit(grey_surface, (0, 0))
+
+            icon_image = pygame_gui.elements.UIImage(
+                relative_rect=rect,
+                image_surface=icon_surface,
+                manager=self.ui_manager,
+                container=self.panel
+            )
+            self._objects.append(icon_image)
+            self.slot_icon_rect.append({
+                "rect": rect,
+                "tooltip": "click to activate/deactivate slot",
+                "action": None,
+                "slot_type": slot_type,
+            })
+
+        # Return vertical height used by this section
+        return total_height + 30  # includes title height
+    
+    def update_tooltips(self, mouse_pos):
+        """Check if mouse is hovering over slots and show tooltips."""
+        self.tooltip_manager.clear_tooltip()
+        
+        # Adjust mouse position relative to panel
+        panel_rect = self.panel.rect
+        relative_mouse_pos = (mouse_pos[0] - panel_rect.x, mouse_pos[1] - panel_rect.y)
+        
+        for entry in self.slot_icon_rect:
+            if entry.get("rect").collidepoint(relative_mouse_pos):
+                self.tooltip_manager.show_tooltip(entry.get("tooltip"), entry["rect"])
+                break
+    
+    def draw_tooltips(self, surface):
+        """Draw tooltips on the given surface."""
+        if self.panel.visible:
+            self.tooltip_manager.draw(surface)
+    
+    def process_events(self, event):
+        if event.type == pygame.MOUSEBUTTONDOWN and event.button == 1:
+            mouse_pos = event.pos
+            panel_rect = self.panel.rect
+            rel_mouse = (mouse_pos[0] - panel_rect.x, mouse_pos[1] - panel_rect.y)
+            planet_industry_points = self.selected_planet.get_total_industry_points()
+            msg=' '
+
+            # Check slot action icons
+            for entry in getattr(self, "slot_icon_rect", []):
+                if entry["rect"].collidepoint(rel_mouse):
+                    action = entry.get("action")
+                    slot_type = entry.get("slot_type")
+
+                    # Handle slot activation toggle
+                    if action is None:
+                        # Find the actual slot object for this rect
+                        # (assuming same order of slots as display)
+                        slots_of_type = [s for s in self.selected_planet.slots if s.type == slot_type]
+                        index = self.slot_icon_rect.index(entry)
+                        if index < len(slots_of_type):
+                            slot = slots_of_type[index]
+                            slot.active = not slot.active  # toggle activation
+                            self.show_info(self.selected_planet)  # refresh UI
+                        break
+
+                    elif action == "add_slot":
+                        msg = self.selected_planet.start_building_in_slot(slot_type, self.building_mgmt, planet_industry_points)
+                        self.show_info(self.selected_planet)  # refresh UI
+                        self.notifications.show(msg)
+                        return
+
+                    elif action == "remove_slot":
+                        msg = self.selected_planet.remove_building_from_slot(slot_type)
+                        self.show_info(self.selected_planet)
+                        self.notifications.show(msg)
+                        return
+
+        
+
+    def show(self, planet):
+        self.selected_planet = planet
+        self.panel.show()
+        self.show_info(planet)
+
+    def hide(self):
+        self.panel.hide()
+        for obj in getattr(self, '_objects', []):
+            obj.kill()
+        self._objects = []
+        self.selected_planet = None
+        self.tooltip_manager.clear_tooltip()

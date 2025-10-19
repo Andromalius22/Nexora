@@ -38,8 +38,8 @@
         "production_points": 0,
         "construction_priority": 2
     },
-    "refinery": {
-        "name": "Refinery",
+    "refine": {
+        "name": "Refine",
         "cost": {
             "industry": 15,
             "credits": 300
@@ -55,7 +55,7 @@
         },
         "defense_bonus": 0.0,
         "production_points": 0,
-        "construction_priority": 4
+        "construction_priority": 5
     },
     "industry": {
         "name": "Industry",
@@ -68,10 +68,27 @@
         "slot_type": "industry",
         "resource_bonus": {},
         "maintenance_cost": {
-            "credits": 20
+            "credits": 2
         },
         "defense_bonus": 0.0,
         "production_points": 100,
         "construction_priority": 3
+    },
+    "energy": {
+        "name": "Energy",
+        "cost": {
+            "industry": 40,
+            "credits": 500
+        },
+        "description": "Produce energy.",
+        "type": "production",
+        "slot_type": "energy",
+        "resource_bonus": {},
+        "maintenance_cost": {
+            "credits": 0.5
+        },
+        "defense_bonus": 0.0,
+        "production_points": 0,
+        "construction_priority": 4
     }
 }

@@ -1,3 +1,8 @@
+--commit 12--
+added new building type, energy
+fixed typo in building.json
+polished slot management UI
+buildings can now be activated/deactivated, and it's visible in the UI
 --commit 11--
 added empires color border
 UI bugs correction

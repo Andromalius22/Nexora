@@ -25,12 +25,13 @@ def random_resource():
 class Slot:
     def __init__(self, slot_type="empty", building=None):
         """
-        :param slot_type: "farm", "mine", "refine", "industry" or "empty"
+        :param slot_type: "farm", "mine", "refine", "industry", "energy" or "empty"
         :param building: Building object currently in the slot (under construction or completed)
         """
         self.type = slot_type
         self.building = building  # None if empty
         self.status = "empty" if building is None else ("under_construction" if building.under_construction else "built")
+        self.active = True     # new flag for active/inactive
 
     def start_building(self, building, planet_industry_points):
         """
@@ -56,6 +57,13 @@ class Slot:
 
     def is_empty(self):
         return self.building is None
+    
+    def clear(self):
+        """Reset this slot to empty state."""
+        self.building = None
+        self.type = "empty"
+        self.status = "empty"
+
 
     def __repr__(self):
         return f"Slot type={self.type} status={self.status} building={self.building}"
@@ -137,6 +145,30 @@ class Planet:
             if slot.progress_construction(planet_industry_points):
                 finished_slots.append(slot)
         return finished_slots
+    
+    def remove_building_from_slot(self, building_type=None):
+        """
+        Removes one building (the first found) of the given type and frees its slot.
+        If no type is given, removes the first non-empty slot.
+        Returns a status message.
+        """
+        for slot in self.slots:
+            # Skip empty slots
+            if slot.is_empty():
+                continue
+            
+            # Check if we match the desired building type (if specified)
+            if building_type is None or slot.type == building_type:
+                removed_building_name = getattr(slot.building, "name", slot.type)
+                slot.clear()  # Or slot.free(), depending on your Slot API
+                return f"Removed {removed_building_name} and freed one {slot.type} slot."
+        
+        # Nothing to remove
+        if building_type:
+            return f"No {building_type} building found to remove."
+        else:
+            return "No building found to remove."
+
 
     def get_active_buildings_by_type(self, building_type):
         return [s.building for s in self.slots if s.type == building_type and s.status == "built"]
@@ -145,6 +177,12 @@ class Planet:
         total = self.industry_points
         total += sum(100 for s in self.slots if s.type == "industry" and s.status == "built")
         return total
+    
+    def get_active_buildings_by_type(self, building_type):
+        return [
+            s.building for s in self.slots
+            if s.type == building_type and s.status == "built" and s.active
+        ]
 
     # ---------------- Resource Extraction ----------------
     def extract_resources(self):

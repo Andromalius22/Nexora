@@ -33,11 +33,14 @@ class Game:
         self.assets.load_image("farm_icon", "assets/icons/farm.png")
         self.assets.load_image("industry_icon", "assets/icons/industry.jpg")
         self.assets.load_image("refine_icon", "assets/icons/steell_mill_02.png")
-        self.assets.load_image("ore_icon", "assets/icons/ore.png")
-        self.assets.load_image("gas_icon", "assets/icons/gas.png")
-        self.assets.load_image("organics_icon", "assets/icons/organics.png") #used for organics resource category and farm buildings
-        self.assets.load_image("liquid_icon", "assets/icons/liquid.png")
+        self.assets.load_image("energy_icon", "assets/icons/energy.png")
+        self.assets.load_image("ore_icon", "assets/icons/ore.png", size=(32, 32))
+        self.assets.load_image("gas_icon", "assets/icons/gas.png", size=(32, 32))
+        self.assets.load_image("organics_icon", "assets/icons/organics.png", size=(32, 32)) #used for organics resource category and farm buildings
+        self.assets.load_image("liquid_icon", "assets/icons/liquid.png", size=(32, 32))
         self.assets.load_image("plus_icon", "assets/icons/plus-box.png", size=(18, 18))
+        self.assets.load_image("plus_02_icon", "assets/icons/plus_02.png", size=(18, 18))
+        self.assets.load_image("moins_icon", "assets/icons/moins.png", size=(18, 18))
         self.assets.load_image("hammer_icon", "assets/icons/hammer.png", size=(10, 10))
 
         # Load planet type icons
@@ -50,6 +53,8 @@ class Game:
         self.tile_info_panel = TileInfoPanel(self.ui_manager, self.assets, pygame.Rect(SCREEN_WIDTH-300, 10, 300, 500), callback_on_planet_click=self.show_planet_panel)
         # Planet management panel on the left
         self.planet_mgmt_panel = PlanetManagement(self.ui_manager, self.assets, pygame.Rect(10, 10, 280, 480), building_mgmt=self.building_manager, notifications_manager=self.notifications)
+        self.planet_slots_mgmt_panel = SlotsManagement(self.ui_manager, self.assets, pygame.Rect(290, 10, 280, 400), notifications_manager=self.notifications, building_mgmt=self.building_manager)
+        
         self.state = 'MAIN_MENU'
         
 
@@ -194,6 +199,7 @@ class Game:
 
     def show_planet_panel(self, planet):
         self.planet_mgmt_panel.show(planet, self.resource_data)
+        self.planet_slots_mgmt_panel.show(planet)
 
     def run(self):
         while self.running:
@@ -294,6 +300,18 @@ class Game:
                     self.state = 'IN_GAME'
             
             if self.state == 'IN_GAME':
+
+                self.ui_manager.process_events(event)
+
+                # Pass all events to active UI panels first
+                if self.tile_info_panel.visible:
+                    self.tile_info_panel.handle_events(event)
+                if self.planet_mgmt_panel.panel.visible:
+                    self.planet_mgmt_panel.process_event(event, self.resource_data, self.tile_info_panel.selected_planet)
+                if self.planet_slots_mgmt_panel.panel.visible:
+                    self.planet_slots_mgmt_panel.process_events(event)
+            
+                # Map click logic (only if mouse not over UI)
                 if event.type == pygame.MOUSEBUTTONDOWN and event.button == 1:
                     mouse_pos = pygame.mouse.get_pos()
 
@@ -312,8 +330,11 @@ class Game:
 
                     if found:
                         self.tile_info_panel.show_info(found)
-                        if found.feature == 'star_system' and found.contents.planets:
-                            self.planet_mgmt_panel.show(found.contents.planets[0], self.resource_data)
+                        if self.tile_info_panel.selected_planet:
+                            print("test if")
+                            self.planet_mgmt_panel.show(self.tile_info_panel.selected_planet, self.resource_data)
+                            self.planet_slots_mgmt_panel.show(self.tile_info_panel.selected_planet)
+                            
                     else:
                         self.tile_info_panel.hide()
                         self.planet_mgmt_panel.hide()
@@ -325,13 +346,9 @@ class Game:
                     if self.planet_mgmt_panel.panel.visible:
                         self.planet_mgmt_panel.panel.visible=False
                         self.planet_mgmt_panel.hide()
-                
-                if event.type == pygame.USEREVENT and event.user_type == pygame_gui.UI_BUTTON_PRESSED:
-                    if self.tile_info_panel:
-                        self.tile_info_panel.handle_events(event)
-                    # Forward UI events to planet management (e.g., build/apply buttons)
-                    if hasattr(self, 'planet_mgmt_panel'):
-                        self.planet_mgmt_panel.process_event(event, self.resource_data)
+                    if self.planet_slots_mgmt_panel.panel.visible:
+                        self.planet_slots_mgmt_panel.panel.visible=False
+                        self.planet_slots_mgmt_panel.hide()
 
         keys = pygame.key.get_pressed()
         if self.camera.move(keys):
@@ -350,6 +367,7 @@ class Game:
             mouse_pos = pygame.mouse.get_pos()
             self.tile_info_panel.update_tooltips(mouse_pos)
             self.planet_mgmt_panel.update_tooltips(mouse_pos)
+            self.planet_slots_mgmt_panel.update_tooltips(mouse_pos)
             if self.time_since_last_second >= 1.0:  # one second passed
                 self.notifications.update()
                 for empire in self.empires:
@@ -386,6 +404,7 @@ class Game:
         if self.state == 'IN_GAME':
             self.tile_info_panel.draw_tooltips(self.screen)
             self.planet_mgmt_panel.draw_tooltips(self.screen)
+            self.planet_slots_mgmt_panel.draw_tooltips(self.screen)
         
         pygame.display.flip()
     
