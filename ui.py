@@ -3,10 +3,14 @@ import pygame_gui
 import json
 import os
 from assetsmanager import AssetsManager
+from defense import *
+from registry import REGISTRY
 
+from logger_setup import *
+
+log = get_logger("UI")
 
 SLOTS_ICON_PLACEHOLDER = "assets/icons/star_empty.png"  # Placeholder for used slots icon
-DEFENSE_ICON_PLACEHOLDER = "assets/icons/star_full.png"  # Placeholder for defense icon
 
 
 ##############################################################################################################################
@@ -86,21 +90,22 @@ class NotificationManager:
         self.ui_manager = ui_manager
         self.screen_rect = screen_rect
         self.active_notifications = []
-        self.display_time = 3000  # milliseconds (3 seconds)
-        
-        # Styling options
-        self.font_color = pygame.Color(255, 50, 50)  # red
-        self.bg_color = pygame.Color(30, 0, 0)
-        self.alpha = 220
+        self.display_time = 5000  # milliseconds (5 seconds)
+
+        # === Visual style for a 4X sci-fi feel ===
+        self.font_color = pygame.Color("#00FF99")  # bright neon green
+        self.bg_color = pygame.Color(10, 20, 15)   # deep dark greenish background
+        self.border_color = pygame.Color(0, 255, 153)  # same as font, slightly glowing border
+        self.alpha = 210  # semi-transparent
 
     def show(self, message, duration=None):
         """Display a notification at the top center of the screen."""
         if duration is None:
             duration = self.display_time
 
-        # Create label element
+        # Create the label
         notif_label = pygame_gui.elements.UILabel(
-            relative_rect=pygame.Rect(0, 0, 400, 30),
+            relative_rect=pygame.Rect(0, 0, 420, 36),
             text=message,
             manager=self.ui_manager,
             anchors={'centerx': 'centerx', 'top': 'top'},
@@ -110,19 +115,34 @@ class NotificationManager:
         # Center horizontally
         notif_label.set_position((
             self.screen_rect.centerx - notif_label.rect.width // 2,
-            20
+            25
         ))
 
-        # Store active notification
+        # Store for timed removal
         self.active_notifications.append((notif_label, pygame.time.get_ticks(), duration))
+
 
     def update(self):
         """Remove expired notifications."""
         current_time = pygame.time.get_ticks()
-        for notif, start_time, duration in self.active_notifications[:]:
-            if current_time - start_time >= duration:
-                notif.kill()
-                self.active_notifications.remove((notif, start_time, duration))
+        new_notifications = []
+        y_offset = 20
+
+        for notif, start_time, duration in self.active_notifications:
+                elapsed = current_time - start_time
+                if elapsed > duration:
+                    notif.kill()
+                    continue
+
+                # stack vertically
+                notif.set_position((
+                    self.screen_rect.centerx - notif.rect.width // 2,
+                    y_offset
+                ))
+                y_offset += notif.rect.height + 10
+                new_notifications.append((notif, start_time, duration))
+
+        self.active_notifications = new_notifications
 
 ##############################################################################################################################
 
@@ -147,7 +167,6 @@ class TileInfoPanel(pygame_gui.elements.UIWindow):
         self.planet_buttons = []
         # Preload default icons once using assetsmanager for performance
         self.slots_icon = pygame.image.load(SLOTS_ICON_PLACEHOLDER).convert_alpha()
-        self.defense_icon = pygame.image.load(DEFENSE_ICON_PLACEHOLDER).convert_alpha()
         
         # Store planet icon rects for tooltip detection
         self.planet_icon_rects = []
@@ -214,7 +233,7 @@ class TileInfoPanel(pygame_gui.elements.UIWindow):
             planet_rect = pygame.Rect(10, this_y, 32, 32)
             
             # Load planet icon from assets or use fallback
-            planet_icon_surface = self.assets.get(f"planet_{planet.planet_type}")
+            planet_icon_surface = self.assets.get(f"planet_{planet.planet_type_id}")
             if not planet_icon_surface:
                 # Fallback to question mark if planet icon not found
                 planet_icon_surface = pygame.image.load("assets/resources/question.png").convert_alpha()
@@ -290,16 +309,15 @@ class TileInfoPanel(pygame_gui.elements.UIWindow):
             # 5. Defense icon and value (rightmost)
             defense_image = pygame_gui.elements.UIImage(
                 relative_rect=pygame.Rect(175, this_y+16, 26, 22),
-                image_surface=self.defense_icon,
+                image_surface=self.assets.get("defense_icon"),
                 manager=self.ui_manager,
                 container=self.container
             )
             self._objects.append(defense_image)
             # Placeholder logic for defense value. Replace with real intel/ownership detection
-            defense_value = 0
             defense_text = pygame_gui.elements.UILabel(
                 relative_rect=pygame.Rect(204, this_y+16, 30, 20),
-                text=f"{defense_value}",
+                text=f"{planet.defense.get_total_defense_value()}",
                 manager=self.ui_manager,
                 container=self.container,
                 object_id='@left_label'
@@ -356,7 +374,6 @@ class TileInfoPanel(pygame_gui.elements.UIWindow):
 
                 # Store for tooltips or click detection
                 self.slot_icon_rects.append({'rect': rect, 'slot': slot})
-                print(f"[UI] slot.status: {slot.status}")
                 self._objects.append(icon_image)
 
             if len(planet.slots)>10:
@@ -475,7 +492,7 @@ class PlanetManagement:
         )
         self._objects.append(self.planet_name_lbl)
         y=70
-        # MOde selection
+        # Mode selection
         self.mode_lbl = pygame_gui.elements.UILabel(
             relative_rect=pygame.Rect(10, y, 100, 24),
             text='Mode : ',
@@ -514,8 +531,8 @@ class PlanetManagement:
         y+=50
         # Resource selection
         self.resource_lbl = pygame_gui.elements.UILabel(
-            relative_rect=pygame.Rect(10, y, 100, 24),
-            text='Resource',
+            relative_rect=pygame.Rect(10, y, 180, 24),
+            text='Select resource to extract',
             manager=self.ui_manager,
             container=self.panel,
             object_id='@left_label'
@@ -549,61 +566,6 @@ class PlanetManagement:
         )
         self._objects.append(self.apply_resource_btn)
         y+=30
-        # Buildings section
-        self.build_lbl = pygame_gui.elements.UILabel(
-            relative_rect=pygame.Rect(10, y, self.rect_input.width - 20, 22),
-            text='Constructions',
-            manager=self.ui_manager,
-            container=self.panel
-        )
-        self._objects.append(self.build_lbl)
-        y+=25
-        self.btn_build_farm = pygame_gui.elements.UIButton(
-            relative_rect=pygame.Rect(10, y, (self.rect_input.width - 30)//2, 28),
-            text='Build Farm',
-            manager=self.ui_manager,
-            container=self.panel
-        )
-        self._objects.append(self.btn_build_farm)
-        self.btn_build_mine = pygame_gui.elements.UIButton(
-            relative_rect=pygame.Rect(20 + (self.rect_input.width - 30)//2, y, (self.rect_input.width - 30)//2, 28),
-            text='Build Mine',
-            manager=self.ui_manager,
-            container=self.panel
-        )
-        self._objects.append(self.btn_build_mine)
-        y+=30
-        self.btn_build_industry = pygame_gui.elements.UIButton(
-            relative_rect=pygame.Rect(10, y, (self.rect_input.width - 30)//2, 28),
-            text='Build Industry',
-            manager=self.ui_manager,
-            container=self.panel
-        )
-        self._objects.append(self.btn_build_industry)
-        self.btn_build_forge = pygame_gui.elements.UIButton(
-            relative_rect=pygame.Rect(20 + (self.rect_input.width - 30)//2, y, (self.rect_input.width - 30)//2, 28),
-            text='Build Forge',
-            manager=self.ui_manager,
-            container=self.panel
-        )
-        self._objects.append(self.btn_build_forge)
-        y+=30
-        # Defense section
-        self.defense_lbl = pygame_gui.elements.UILabel(
-            relative_rect=pygame.Rect(10, y, self.rect_input.width - 20, 22),
-            text='Planetary Defense',
-            manager=self.ui_manager,
-            container=self.panel
-        )
-        self._objects.append(self.defense_lbl)
-        y+=25
-        self.btn_build_defense = pygame_gui.elements.UIButton(
-            relative_rect=pygame.Rect(10, y, self.rect_input.width - 20, 28),
-            text='Build Defense +1',
-            manager=self.ui_manager,
-            container=self.panel
-        )
-        self._objects.append(self.btn_build_defense)
         # Status line
         self.status_lbl = pygame_gui.elements.UILabel(
             relative_rect=pygame.Rect(10, 338, self.rect_input.width - 20, 22),
@@ -612,22 +574,22 @@ class PlanetManagement:
             container=self.panel
         )
         self._objects.append(self.status_lbl)
-
-    def _rebuild_resource_options(self, resources_data):
-        # Flatten resource names
-        names = list(resources_data.keys())
-        if not names:
-            names = ['-']
-        current = names[0]
-        # Recreate dropdown (pygame_gui does not support dynamic option change cleanly)
-        self.resource_dropdown.kill()
-        self.resource_dropdown = pygame_gui.elements.UIDropDownMenu(
-            options_list=names,
-            starting_option=current,
-            relative_rect=pygame.Rect(120, 105, self.panel.rect.width - 130, 26),
+        y+=30
+        self.stats_lbl = pygame_gui.elements.UILabel(
+            relative_rect=pygame.Rect(10, y, 150, 20),
+            text='Production stats',
             manager=self.ui_manager,
             container=self.panel
         )
+        self._objects.append(self.stats_lbl)
+        y+=30
+        farm_image = pygame_gui.elements.UIImage(
+                relative_rect=pygame.Rect(10, y, 20, 20),
+                image_surface=self.assets.get("farm_icon"),
+                manager=self.ui_manager,
+                container=self.panel
+            )
+        self._objects.append(farm_image)
 
     def show(self, planet, resources_data):
         self.selected_planet = planet
@@ -729,30 +691,15 @@ class PlanetManagement:
                 container=self.panel
             )
             self.resource_icons[name] = btn
+            self._objects.append(btn)
             x += size + spacing
 
 
-    def process_event(self, event, resources_data, planet):
+    def process_event(self, event, planet):
         if event.type == pygame_gui.UI_BUTTON_PRESSED:
-            planet_industry_points = planet.get_total_industry_points()
-            msg=' '
-            
-            if event.ui_element == self.btn_build_farm:
-                msg = planet.start_building_in_slot("farm", self.building_mgmt, planet_industry_points)
-            elif event.ui_element == self.btn_build_mine:
-                msg = planet.start_building_in_slot("mine", self.building_mgmt, planet_industry_points)
-            elif event.ui_element == self.btn_build_industry:
-                msg = planet.start_building_in_slot("industry", self.building_mgmt, planet_industry_points)
-            elif event.ui_element == self.btn_build_forge:
-                msg = planet.start_building_in_slot("refinery", self.building_mgmt, planet_industry_points)
-                planet.mode = "refine"  # Forge sets refining mode
 
-            elif event.ui_element == self.btn_build_defense:
-                self.selected_planet.defense_value += 1
-                self.status_lbl.set_text(f"Defense {self.selected_planet.defense_value}")
-            elif event.ui_element == self.apply_resource_btn:
+            if event.ui_element == self.apply_resource_btn:
                 self.selected_planet.current_resource = self.selected_resource
-            self.notifications.show(msg)
 
         elif event.type == pygame.MOUSEBUTTONDOWN and event.button == 1:
             mouse_pos = event.pos
@@ -836,6 +783,14 @@ class SlotsManagement:
             object_id='@left_label'
         )
         self._objects.append(title)
+            
+        statistic = pygame_gui.elements.UILabel(
+            relative_rect=pygame.Rect(110, y, 100, 30),
+            text=f"{self.selected_planet.statistics[slot_type]}/min",
+            manager=self.ui_manager,
+            container=self.panel
+        )
+        self._objects.append(statistic)
         y+=30
 
         max_per_row = 10
@@ -900,6 +855,8 @@ class SlotsManagement:
                 grey_surface = pygame.Surface(icon_surface.get_size(), pygame.SRCALPHA)
                 grey_surface.fill((100, 100, 100, 150))  # semi-transparent grey overlay
                 icon_surface.blit(grey_surface, (0, 0))
+            
+            slot_index = i  # index within that slot_type only
 
             icon_image = pygame_gui.elements.UIImage(
                 relative_rect=rect,
@@ -910,9 +867,10 @@ class SlotsManagement:
             self._objects.append(icon_image)
             self.slot_icon_rect.append({
                 "rect": rect,
-                "tooltip": "click to activate/deactivate slot",
+                "tooltip": f"click to activate/deactivate {slot_type} slot",
                 "action": None,
                 "slot_type": slot_type,
+                "slot_index": slot_index,
             })
 
         # Return vertical height used by this section
@@ -941,7 +899,6 @@ class SlotsManagement:
             mouse_pos = event.pos
             panel_rect = self.panel.rect
             rel_mouse = (mouse_pos[0] - panel_rect.x, mouse_pos[1] - panel_rect.y)
-            planet_industry_points = self.selected_planet.get_total_industry_points()
             msg=' '
 
             # Check slot action icons
@@ -949,32 +906,269 @@ class SlotsManagement:
                 if entry["rect"].collidepoint(rel_mouse):
                     action = entry.get("action")
                     slot_type = entry.get("slot_type")
+                    slot_index = entry.get("slot_index")
 
                     # Handle slot activation toggle
-                    if action is None:
+                    if action is None and slot_index is not None:
                         # Find the actual slot object for this rect
                         # (assuming same order of slots as display)
                         slots_of_type = [s for s in self.selected_planet.slots if s.type == slot_type]
-                        index = self.slot_icon_rect.index(entry)
-                        if index < len(slots_of_type):
-                            slot = slots_of_type[index]
+                        if slot_index < len(slots_of_type):
+                            slot = slots_of_type[slot_index]
                             slot.active = not slot.active  # toggle activation
+                            self.selected_planet.on_slots_changed(slot_type=slot_type)
+                            log.debug(f"slot {slot_index} of type {slot_type} toggled {slot.active} on {self.selected_planet.name}. new stats : {self.selected_planet.statistics["farm"]}")
                             self.show_info(self.selected_planet)  # refresh UI
+                            
                         break
 
                     elif action == "add_slot":
-                        msg = self.selected_planet.start_building_in_slot(slot_type, self.building_mgmt, planet_industry_points)
+                        msg = self.selected_planet.start_build(f"{slot_type}", self.building_mgmt)
+                        self.selected_planet.on_slots_changed(slot_type=slot_type, action="add")
                         self.show_info(self.selected_planet)  # refresh UI
                         self.notifications.show(msg)
+                        
                         return
 
                     elif action == "remove_slot":
                         msg = self.selected_planet.remove_building_from_slot(slot_type)
+                        self.selected_planet.on_slots_changed(slot_type=slot_type, action="remove")
                         self.show_info(self.selected_planet)
                         self.notifications.show(msg)
+                        
                         return
 
         
+
+    def show(self, planet):
+        self.selected_planet = planet
+        self.panel.show()
+        self.show_info(planet)
+
+    def hide(self):
+        self.panel.hide()
+        for obj in getattr(self, '_objects', []):
+            obj.kill()
+        self._objects = []
+        self.selected_planet = None
+        self.tooltip_manager.clear_tooltip()
+    
+class PlanetaryDefenseManagement:
+    def __init__(self, ui_manager, assets, rect, notifications_manager=None):
+        self.panel = pygame_gui.elements.UIPanel(
+            relative_rect=rect,
+            starting_height=1,
+            manager=ui_manager,
+            visible=False
+        )
+        self.ui_manager = ui_manager
+        self.assets = assets
+        self._objects = []
+        self.selected_planet = None
+        self.font = pygame.font.SysFont("arial", 16)
+        self.tooltip_manager = TooltipManager(self.font)
+        self.notifications= notifications_manager
+        self.icons_rect = [] #for tooltips
+    
+    def show_info(self, planet):
+        for obj in getattr(self, '_objects', []):
+            obj.kill()
+        self._objects = []
+        self.tooltip_manager.clear_tooltip()
+        self.icons_rect = []
+        title = pygame_gui.elements.UILabel(
+            relative_rect=pygame.Rect(self.panel.relative_rect.width/4, 5, 150, 30),
+            text='Defense management',
+            manager=self.ui_manager,
+            container=self.panel
+        )
+        self._objects.append(title)
+
+        # Load defense units (use your loader or an injected list)
+        # Assuming you have a function load_defense_units() that returns objects with .name, .layer, .defense_value, .upkeep, .power_use
+        units = REGISTRY["defense_units"]
+
+
+        # Layout constants
+        PAD_X = 8
+        PAD_Y = 8
+        ROW_HEIGHT = 56
+        ICON_SIZE = (48, 48)
+        start_x = 8
+        start_y = 50
+
+        # icons for cost/energy — these should be preloaded in your AssetManager with keys 'icon_credit' and 'icon_energy'
+        credit_key = "credit_icon"
+        energy_key = "energy_icon"
+        credit_surface = self.assets.get(credit_key) if hasattr(self, "assets") else None
+        energy_surface = self.assets.get(energy_key) if hasattr(self, "assets") else None
+
+        # Iterate units and create a row per unit
+        i=0
+        for unit_id, data in units.items():
+            row_y = start_y + i * (ROW_HEIGHT + PAD_Y)
+
+            # 1) Unit icon (use asset key convention "unit_<name>")
+            asset_key = f"unit_{data.get("name", "Unknown Unit")}"
+            icon_surface = None
+            if hasattr(self, "assets"):
+                icon_surface = self.assets.get(asset_key)
+            if icon_surface is None:
+                # fallback to a generic icon if the specific unit icon is missing
+                icon_surface = self.assets.get("assets/resources/question.png") if hasattr(self, "assets") else None
+
+            # Create UIImage for unit icon
+            icon_rect = pygame.Rect(start_x, row_y + (ROW_HEIGHT - ICON_SIZE[1]) // 2, ICON_SIZE[0], ICON_SIZE[1])
+            if icon_surface:
+                ui_icon = pygame_gui.elements.UIImage(
+                    relative_rect=icon_rect,
+                    image_surface=icon_surface,
+                    manager=self.ui_manager,
+                    container=self.panel
+                )
+            else:
+                ui_icon = pygame_gui.elements.UILabel(
+                    relative_rect=icon_rect,
+                    text="?",
+                    manager=self.ui_manager,
+                    container=self.panel
+                )
+            self._objects.append(ui_icon)
+
+            # 2) Unit name + layer text
+            name_x = icon_rect.right + PAD_X
+            name_w = 260
+            name_text = f"{data.get("name", "Unknown Unit")} — {data.get("layer", "UNKNOWN")}"  # layer in capitals via Enum.name
+            name_label = pygame_gui.elements.UILabel(
+                relative_rect=pygame.Rect(name_x, row_y + 8, name_w, 20),
+                text=name_text,
+                manager=self.ui_manager,
+                container=self.panel,
+                object_id='@left_label'
+            )
+            self._objects.append(name_label)
+
+            # optional subtitle or stats line (defense value)
+            defense_icon=pygame_gui.elements.UIImage(
+                relative_rect=pygame.Rect(name_x, row_y +30, 15, 15),
+                image_surface=self.assets.get("defense_icon"),
+                manager=self.ui_manager,
+                container=self.panel
+            )
+            self._objects.append(defense_icon)
+            stats_text = f"{data.get("defense_value", 0)}"
+            stats_label = pygame_gui.elements.UILabel(
+                relative_rect=pygame.Rect(name_x + 20, row_y + 30, 18, 18),
+                text=stats_text,
+                manager=self.ui_manager,
+                container=self.panel,
+                object_id="#small_label"
+            )
+            self._objects.append(stats_label)
+            rect=pygame.Rect(name_x, row_y+30, 40, 18)
+            self.icons_rect.append((rect, "defense points"))
+
+            # 3) Cost/upkeep block (credit icon + "cost (+upkeep)")
+            cost_x = name_x + 40 + PAD_X
+            cost_w = 120
+            # credit icon
+            if credit_surface:
+                credit_img = pygame_gui.elements.UIImage(
+                    relative_rect=pygame.Rect(cost_x, row_y + 30, 20, 20),
+                    image_surface=credit_surface,
+                    manager=self.ui_manager,
+                    container=self.panel
+                )
+                self._objects.append(credit_img)
+                credit_label_x = cost_x + 24
+            else:
+                credit_label_x = cost_x
+
+            # Format cost text: use defense_value as cost placeholder (tweak as needed)
+            # You mentioned cost (+upkeep). I assume `upkeep` is the recurring cost, and there might be a build cost field later.
+            cost = data.get("cost", {})
+            cost_text = f"{cost.get("credits", 0)}  (+{data.get("upkeep", {}).get("credits", 0)})"
+            cost_label = pygame_gui.elements.UILabel(
+                relative_rect=pygame.Rect(credit_label_x, row_y + 30, cost_w, 20),
+                text=cost_text,
+                manager=self.ui_manager,
+                container=self.panel,
+                object_id='@left_label'
+            )
+            self._objects.append(cost_label)
+            rect=pygame.Rect(cost_x, row_y+30, 80, 20)
+            self.icons_rect.append((rect, "cost (+upkeep)"))
+
+            # 4) Energy usage (energy icon + power_use)
+            energy_x = credit_label_x + 60 + PAD_X
+            if energy_surface:
+                energy_img = pygame_gui.elements.UIImage(
+                    relative_rect=pygame.Rect(energy_x, row_y + 30, 20, 20),
+                    image_surface=energy_surface,
+                    manager=self.ui_manager,
+                    container=self.panel
+                )
+                self._objects.append(energy_img)
+                energy_label_x = energy_x + 24
+            else:
+                energy_label_x = energy_x
+
+            energy_text = f"{data.get("power_use", 0)}"
+            energy_label = pygame_gui.elements.UILabel(
+                relative_rect=pygame.Rect(energy_label_x, row_y + 30, 20, 20),
+                text=energy_text,
+                manager=self.ui_manager,
+                container=self.panel,
+                object_id='@left_label'
+            )
+            self._objects.append(energy_label)
+            rect=pygame.Rect(energy_x, row_y+30, 60, 20)
+            self.icons_rect.append((rect, "energy cost \n(while in use)"))
+
+            # 5) Build button (right side)
+            build_btn_rect = pygame.Rect(self.panel.relative_rect.width - 80, row_y + (ROW_HEIGHT - 28)//2 + 10, 70, 28)
+            build_btn = pygame_gui.elements.UIButton(
+                relative_rect=build_btn_rect,
+                text="Build",
+                manager=self.ui_manager,
+                container=self.panel
+            )
+            self._objects.append(build_btn)
+            self.icons_rect.append((build_btn_rect, f"Construct one {data.get("name", "Unknown Unit")}"))
+
+            # store mapping if you want to handle clicks on this button later:
+            # e.g. self._unit_row_map[build_btn] = unit
+            if not hasattr(self, "_unit_row_map"):
+                self._unit_row_map = {}
+            self._unit_row_map[build_btn] = unit_id
+            i+=1
+
+    def update_tooltips(self, mouse_pos):
+        """Check if mouse is hovering over slots and show tooltips."""
+        self.tooltip_manager.clear_tooltip()
+        
+        # Adjust mouse position relative to panel
+        panel_rect = self.panel.rect
+        relative_mouse_pos = (mouse_pos[0] - panel_rect.x, mouse_pos[1] - panel_rect.y)
+        
+        for rect, tooltip in self.icons_rect:
+            if rect.collidepoint(relative_mouse_pos):
+                self.tooltip_manager.show_tooltip(tooltip, rect)
+                break
+    
+    def draw_tooltips(self, surface):
+        """Draw tooltips on the given surface."""
+        if self.panel.visible:
+            self.tooltip_manager.draw(surface)
+        
+    def process_event(self, event):
+        if event.type == pygame.USEREVENT and event.user_type == pygame_gui.UI_BUTTON_PRESSED:
+            btn = event.ui_element
+            if btn in self._unit_row_map:
+                unit = self._unit_row_map[btn]
+                msg = self.selected_planet.start_build(f"{unit}")
+                self.notifications.show(msg)
+                #print(f"[Defense] Queued build: {unit.name} on {self.selected_planet.name}")
 
     def show(self, planet):
         self.selected_planet = planet

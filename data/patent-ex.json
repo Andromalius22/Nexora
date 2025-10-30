@@ -1,0 +1,8 @@
+{
+    "id": "refined_gas_efficiency",
+    "target_building_type": "refine",
+    "applies_to_resource_type": ["gas"],
+    "applies_to_refinement_level": ["processed"],
+    "bonus_multiplier": 1.10
+  }
+  

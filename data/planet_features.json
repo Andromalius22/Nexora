@@ -1,0 +1,259 @@
+[
+    {
+          "id": "fertile_basins",
+          "name": "Fertile Basins",
+          "planet_type": "terrestrial",
+          "description": "Wide, nutrient-rich plains ideal for agriculture.",
+          "effects": {"population_growth_bonus": 0.15, "industry_output_bonus": 0.05},
+          "tags": ["economic", "terrain"]
+    },
+    {
+          "id": "ancient_ruins",
+          "name": "Ancient Ruins",
+          "planet_type": "terrestrial",
+          "description": "Remnants of a long-lost civilization offer research insights.",
+          "effects": {"research_bonus": 0.1, "defense_bonus": -0.05},
+          "tags": ["research", "anomaly"]
+    },
+    {
+          "id": "unstable_weather",
+          "name": "Unstable Weather",
+          "planet_type": "terrestrial",
+          "description": "Frequent storms disrupt farming and transport.",
+          "effects": {"population_growth_penalty": -0.1, "maintenance_increase": 0.15},
+          "tags": ["hazard", "weather"]
+    },
+    {
+          "id": "mild_climate",
+          "name": "Mild Climate",
+          "planet_type": "terrestrial",
+          "description": "Comfortable atmospheric and temperature conditions.",
+          "effects": {"habitability_bonus": 0.1},
+          "tags": ["environmental"]
+    },
+    {
+          "id": "magma_flows",
+          "name": "Magma Flows",
+          "planet_type": "volcanic",
+          "description": "Abundant geothermal vents provide cheap energy.",
+          "effects": {"power_generation_bonus": 0.3, "maintenance_increase": 0.2},
+          "tags": ["energy", "hazard", "resource"]
+    },
+    {
+          "id": "tectonic_instability",
+          "name": "Tectonic Instability",
+          "planet_type": "volcanic",
+          "description": "Frequent quakes and eruptions damage infrastructure.",
+          "effects": {"industry_output_penalty": -0.15, "defense_bonus": -0.1},
+          "tags": ["hazard", "instability"]
+    },
+    {
+          "id": "rare_crystals",
+          "name": "Rare Crystals",
+          "planet_type": "volcanic",
+          "description": "Volcanic processes produce exotic crystal formations.",
+          "effects": {"research_bonus": 0.1, "industry_output_bonus": 0.05},
+          "tags": ["research", "mineral"]
+    },
+    {
+          "id": "scorched_surface",
+          "name": "Scorched Surface",
+          "planet_type": "volcanic",
+          "description": "Extreme heat reduces colonization viability.",
+          "effects": {"habitability_penalty": -0.2},
+          "tags": ["hazard", "temperature"]
+    },
+    {
+          "id": "dense_atmosphere",
+          "name": "Dense Atmosphere",
+          "planet_type": "hydrogen_giant",
+          "description": "Thick hydrogen layers yield high gas output.",
+          "effects": {"gas_yield_bonus": 0.25},
+          "tags": ["resource", "atmosphere"]
+    },
+    {
+          "id": "plasma_turbulence",
+          "name": "Plasma Turbulence",
+          "planet_type": "hydrogen_giant",
+          "description": "Violent storms disrupt orbital refineries.",
+          "effects": {"industry_output_penalty": -0.25},
+          "tags": ["hazard", "energy"]
+    },
+    {
+          "id": "magnetic_sheath",
+          "name": "Magnetic Sheath",
+          "planet_type": "hydrogen_giant",
+          "description": "A powerful magnetic field protects orbitals from radiation.",
+          "effects": {"defense_bonus": 0.1},
+          "tags": ["defensive", "magnetic"]
+    },
+    {
+          "id": "radiation_belts",
+          "name": "Radiation Belts",
+          "planet_type": "hydrogen_giant",
+          "description": "Intense radiation interferes with sensors and shielding.",
+          "effects": {"sensor_penalty": -0.3},
+          "tags": ["hazard", "radiation"]
+    },
+    {
+          "id": "ion_storms",
+          "name": "Ion Storms",
+          "planet_type": "ionized_giant",
+          "description": "High-energy storms wreak havoc on electronics.",
+          "effects": {"maintenance_increase": 0.2, "power_generation_bonus": -0.1},
+          "tags": ["hazard", "energy", "weather"]
+    },
+    {
+          "id": "superconductive_bands",
+          "name": "Superconductive Bands",
+          "planet_type": "ionized_giant",
+          "description": "Natural electromagnetic layers aid in energy collection.",
+          "effects": {"power_generation_bonus": 0.2},
+          "tags": ["energy", "magnetic"]
+    },
+    {
+          "id": "plasma_arches",
+          "name": "Plasma Arches",
+          "planet_type": "ionized_giant",
+          "description": "Gigantic plasma arcs emit spectacular light shows.",
+          "effects": {"morale_bonus": 0.1},
+          "tags": ["cultural", "anomaly"]
+    },
+    {
+          "id": "magnetic_disruption",
+          "name": "Magnetic Disruption",
+          "planet_type": "ionized_giant",
+          "description": "Planet-wide magnetic interference confuses targeting systems.",
+          "effects": {"sensor_penalty": -0.25, "ship_accuracy_penalty": -0.15},
+          "tags": ["hazard", "magnetic"]
+    },
+    {
+          "id": "quantum_flux_fields",
+          "name": "Quantum Flux Fields",
+          "planet_type": "quantum_giant",
+          "description": "Unstable quantum zones enhance exotic material synthesis.",
+          "effects": {"research_bonus": 0.2, "industry_output_penalty": -0.1},
+          "tags": ["research", "quantum"]
+    },
+    {
+          "id": "temporal_fluctuations",
+          "name": "Temporal Fluctuations",
+          "planet_type": "quantum_giant",
+          "description": "Localized time distortions cause erratic production.",
+          "effects": {"industry_output_penalty": -0.3, "research_bonus": 0.1},
+          "tags": ["hazard", "quantum", "anomaly"]
+    },
+    {
+          "id": "gravitic_shear",
+          "name": "Gravitic Shear",
+          "planet_type": "quantum_giant",
+          "description": "Unstable gravity fields threaten orbital stations.",
+          "effects": {"defense_bonus": -0.15, "ship_speed_penalty": -0.1},
+          "tags": ["hazard", "gravity"]
+    },
+    {
+          "id": "dimensional_echoes",
+          "name": "Dimensional Echoes",
+          "planet_type": "quantum_giant",
+          "description": "Strange structures repeat across spacetime layers.",
+          "effects": {"research_bonus": 0.15},
+          "tags": ["anomaly", "quantum"]
+    },
+    {
+          "id": "abundant_life",
+          "name": "Abundant Life",
+          "planet_type": "oceanic",
+          "description": "Rich marine biodiversity supports biomass industries.",
+          "effects": {"organics_yield_bonus": 0.2},
+          "tags": ["resource", "biological"]
+    },
+    {
+          "id": "acid_rains",
+          "name": "Acid Rains",
+          "planet_type": "oceanic",
+          "description": "Corrosive rainfall erodes colonies and equipment.",
+          "effects": {"maintenance_increase": 0.25, "industry_output_penalty": -0.1},
+          "tags": ["hazard", "weather"]
+    },
+    {
+          "id": "subsurface_currents",
+          "name": "Subsurface Currents",
+          "planet_type": "oceanic",
+          "description": "Deep ocean currents make orbital launch operations difficult.",
+          "effects": {"industry_output_penalty": -0.05, "defense_bonus": -0.05},
+          "tags": ["hazard", "oceanic"]
+    },
+    {
+          "id": "bioluminescent_seas",
+          "name": "Bioluminescent Seas",
+          "planet_type": "oceanic",
+          "description": "The oceans glow with luminous plankton, attracting colonists.",
+          "effects": {"morale_bonus": 0.1, "habitability_bonus": 0.05},
+          "tags": ["environmental", "aesthetic"]
+    },
+    {
+          "id": "toxic_spores",
+          "name": "Toxic Spores",
+          "planet_type": "jungle",
+          "description": "Airborne spores corrode metal and sicken colonists.",
+          "effects": {"population_growth_penalty": -0.2, "maintenance_increase": 0.1},
+          "tags": ["hazard", "biological"]
+    },
+    {
+          "id": "predatory_wildlife",
+          "name": "Predatory Wildlife",
+          "planet_type": "jungle",
+          "description": "Aggressive fauna hinder expansion efforts.",
+          "effects": {"population_growth_penalty": -0.15, "defense_bonus": -0.1},
+          "tags": ["hazard", "wildlife"]
+    },
+    {
+          "id": "hyperflora_growth",
+          "name": "Hyperflora Growth",
+          "planet_type": "jungle",
+          "description": "Gigantic plant growth provides biomass but overruns colonies.",
+          "effects": {"organics_yield_bonus": 0.2, "maintenance_increase": 0.15},
+          "tags": ["biological", "resource", "hazard"]
+    },
+    {
+          "id": "symbiotic_organisms",
+          "name": "Symbiotic Organisms",
+          "planet_type": "jungle",
+          "description": "Native flora interact beneficially with human bio-tech.",
+          "effects": {"habitability_bonus": 0.15, "research_bonus": 0.05},
+          "tags": ["biological", "anomaly"]
+    },
+    {
+          "id": "neural_web",
+          "name": "Planetary Neural Web",
+          "planet_type": "symbiotic",
+          "description": "A planet-wide biological network links all life.",
+          "effects": {"research_bonus": 0.25, "population_growth_bonus": 0.1},
+          "tags": ["biological", "research"]
+    },
+    {
+          "id": "biosphere_instability",
+          "name": "Biosphere Instability",
+          "planet_type": "symbiotic",
+          "description": "Delicate symbiotic systems collapse under stress.",
+          "effects": {"habitability_penalty": -0.2},
+          "tags": ["hazard", "biological"]
+    },
+    {
+          "id": "psychotropic_spores",
+          "name": "Psychotropic Spores",
+          "planet_type": "symbiotic",
+          "description": "Native spores alter colonists’ mental states — both enlightening and dangerous.",
+          "effects": {"morale_bonus": 0.1, "research_bonus": 0.05, "population_growth_penalty": -0.05},
+          "tags": ["biological", "anomaly"]
+    },
+    {
+          "id": "harmonic_ecosystem",
+          "name": "Harmonic Ecosystem",
+          "planet_type": "symbiotic",
+          "description": "Stable co-evolution between species fosters peace and well-being.",
+          "effects": {"habitability_bonus": 0.2},
+          "tags": ["biological", "environmental"]
+    }
+]
+  

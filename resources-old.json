@@ -1,0 +1,281 @@
+[
+    {
+        "id": "basaltic_ore",
+        "name" : "Basaltic Ore",
+        "resource_icon": "assets/resources/T1_ORE.png",
+        "resource_type": "ore",
+        "description": "Raw planetary crust metals (iron, nickel, copper).",
+        "tier": 1,
+        "base_price": 10
+    },
+    {
+        "id": "ferrovite",
+        "name":"Ferrovite",
+        "resource_icon": "assets/resources/T2_ORE.png",
+        "resource_type": "ore",
+        "description": "Stronger minerals, found more deeply in planets.",
+        "tier": 2,
+        "base_price": 30
+    },
+    {
+        "id": "crytallite",
+        "name": "Crytallite",
+        "resource_icon": "assets/resources/T3_ORE.png",
+        "resource_type": "ore",
+        "description": "Metallic crystal lattice grown under pressure; high conductivity.",
+        "tier": 3,
+        "base_price": 70
+    },
+    {
+        "id": "neutron-forged_plate",
+        "name": "Neutron-Forged Plate",
+        "resource_icon": "assets/resources/T4_ORE.png",
+        "resource_type": "ore",
+        "description": "Hyper-dense metal alloy forged under intense neutron radiation; hard to machine",
+        "tier": 4,
+        "base_price": 150
+    },
+    {
+        "id": "gravitic_mesh",
+        "name": "Gravitic Mesh",
+        "resource_icon": "assets/resources/T5_ORE.png",
+        "resource_type": "ore",
+        "description": "Forged from the remnants of a neutron star, and condensed into solid metal mesh; virtually indestructible. Metal infused with gravity-manipulative particles.",
+        "tier": 5,
+        "base_price": 300
+    },
+    {
+        "id": "singularium",
+        "name": "Singularium",
+        "resource_icon": "assets/resources/T6_ORE.png",
+        "resource_type": "ore",
+        "description": "Forged from the remnants of a black hole, and condensed into solid metal mesh. Synthetic matter built from spacetime filaments.",
+        "tier": 6,
+        "base_price": 600
+    },
+    {
+        "id": "hydrolyte",
+        "name": "Hydrolyte",
+        "resource_icon": "assets/resources/T1_LIQUID.png",
+        "resource_type": "liquid",
+        "description": "Water with a strange affinity for metals, making it useful for electrolysis.",
+        "tier": 1,
+        "base_price": 10
+    },
+    {
+        "id": "vaporite",
+        "name": "Vaporite",
+        "resource_icon": "assets/resources/T2_LIQUID.png",
+        "resource_type": "liquid",
+        "description": "Water vaporized at extreme temperatures, compressed into a solid form.",
+        "tier": 2,
+        "base_price": 30
+    },
+    {
+        "id": "aqueous_nitrate",
+        "name":"Aqueous Nitrate",
+        "resource_icon": "assets/resources/T3_LIQUID.png",
+        "resource_type": "liquid",
+        "description": "Water with a strange affinity for metals, making it useful for electrolysis.",
+        "tier": 3,
+        "base_price": 70
+    },
+    {
+        "id": "aquiferite",
+        "name": "Aquiferite",
+        "resource_icon": "assets/resources/T4_LIQUID.png",
+        "resource_type": "liquid",
+        "description": "Water with a strange affinity for metals, making it useful for electrolysis.",
+        "tier": 4,
+        "base_price": 150
+    },
+    {
+        "id": "aqueous_sulfate",
+        "name": "Aqueous Sulfate",
+        "resource_icon": "assets/resources/T5_LIQUID.png",
+        "resource_type": "liquid",
+        "description": "Water with a strange affinity for metals, making it useful for electrolysis.",
+        "tier": 5,
+        "base_price": 300
+    },
+    {
+        "id" : "void_water",
+        "name" : "Void Water",
+        "resource_icon": "assets/resources/T6_LIQUID.png",
+        "resource_type": "liquid",
+        "description": "Water from a higher dimension, frozen in the vacuum of space.",
+        "tier": 6,
+        "base_price": 600
+    },
+    {
+        "id": "organifera",
+        "name": "Organifera",
+        "resource_icon": "assets/resources/T1_ORGANICS.png",
+        "resource_type": "organics",
+        "description": "Raw biological material: plants, microbes, proteins. Used for food, basic medicine, colonist upkeep.",
+        "tier": 1,
+        "base_price": 10
+    },
+    {
+        "id" : "organifera_II",
+        "name": "Organifera II",
+        "resource_icon": "assets/resources/T2_ORGANICS.png",
+        "resource_type": "organics",
+        "description": "More complex biological materials",
+        "tier": 2,
+        "base_price": 30
+    },
+    {
+        "id": "symbiotic_culture",
+        "name": "Symbiotic Culture",
+        "resource_icon": "assets/resources/T3_ORGANICS.png",
+        "resource_type": "organics",
+        "description": "Engineered organisms functioning collectively.",
+        "tier": 3,
+        "base_price": 70
+    },
+    {
+        "id": "neural_biomass",
+        "name": "Neural Biomass",
+        "resource_icon": "assets/resources/T4_ORGANICS.png",
+        "resource_type": "organics",
+        "description": "Wetware capable of data processing.",
+        "tier": 4,
+        "base_price": 150
+    },
+    {
+        "id" : "edenic_genome",
+        "name" : "Edenic Genome",
+        "resource_icon": "assets/resources/T5_ORGANICS.png",
+        "resource_type": "organics",
+        "description": "Blueprint of perfected life; self-replicating. Used in Genetic terraforming, cloning.",
+        "tier": 5,
+        "base_price": 300
+    },
+    {
+        "id" : "lifeflux_essence",
+        "name" : "Lifeflux Essence",
+        "resource_icon": "assets/resources/T6_ORGANICS.png",
+        "resource_type": "organics",
+        "description": "Living energy form — part biomass, part psionic. Used in Ascension projects, god-like biology tech.",
+        "tier": 6,
+        "base_price": 600
+    },
+    {
+        "id" : "volatite_gass",
+        "name" : "Volatite Gas",
+        "resource_icon": "assets/resources/T1_GAS.png",
+        "resource_type": "gas",
+        "description": "Common planetary atmosphere gases (methane, CO₂, nitrogen). Used in Fuel, chemical industry, early power.",
+        "tier": 1,
+        "base_price": 10
+    },
+    {
+        "id" : "ion_vapor",
+        "name" : "Ion Vapor",
+        "resource_icon": "assets/resources/T2_GAS.png",
+        "resource_type": "gas",
+        "description": "Electrically charged gas mix. Used in Propulsion, power generation.",
+        "tier": 2,
+        "base_price": 30
+    },
+    {
+        "id" : "plasma_condensate",
+        "name" : "Plasma Condensate",
+        "resource_icon": "assets/resources/T3_GAS.png",
+        "resource_type": "gas",
+        "description": "Stabilized plasma in containment fields. Used in Weaponry, advanced reactors.",
+        "tier": 3,
+        "base_price": 70
+    },
+    {
+        "id" : "quantum_vapor",
+        "name" : "Quantum Vapor",
+        "resource_icon": "assets/resources/T4_GAS.png",
+        "resource_type": "gas",
+        "description": "Gas whose molecules fluctuate across states. Used in Cloaking tech.",
+        "tier": 4,
+        "base_price": 150
+    },
+    {
+        "id" : "hyperfluid_filament",
+        "name" : "Hyperfluid filament",
+        "resource_icon": "assets/resources/T5_GAS.png",
+        "resource_type": "gas",
+        "description": "Gas found rarely in quantum tide pools, resonant vortices created by stellar fields.",
+        "tier": 5,
+        "base_price": 300
+    },
+    {
+        "id" : "aetherflow",
+        "name" : "Aetherflow",
+        "resource_icon": "assets/resources/T6_GAS.png",
+        "resource_type": "gas",
+        "description": "Particles existing between dimensions. Used in FTL drives, wormhole generators.",
+        "tier": 6,
+        "base_price": 300
+    },
+    {
+        "id" : "eventide_gas",
+        "name": "Eventide Gas",
+        "resource_icon": "assets/resources/T7_GAS.png",
+        "resource_type": "gas",
+        "description": "Dark-energy infused vapor drawn from dying stars. Used as an ultimate energy source and in time/space manipulation.",
+        "tier": 7,
+        "base_price": 600
+    },
+    {
+        "id" : "electro-thermal_cells",
+        "name" : "Electro-Thermal Cells",
+        "resource_icon": "assets/resources/T1_ENERGY.png",
+        "resource_type": "energy",
+        "description": "Stored heat and electrical potential. Used in Early power plants, mining tools.",
+        "tier": 1,
+        "base_price": 10
+    },
+    {
+        "id" : "fusion_isotopes",
+        "name" : "Fusion Isotopes",
+        "resource_icon": "assets/resources/T2_ENERGY.png",
+        "resource_type": "energy",
+        "description": "Hydrogen/helium fuels refined for reactors. Used in Mid-tier reactors, engines.",
+        "tier": 2,
+        "base_price": 30
+    },
+    {
+        "id" : "quantum_flux",
+        "name" : "Quantum Flux",
+        "resource_icon": "assets/resources/T3_ENERGY.png",
+        "resource_type": "energy",
+        "description": "Particle energy states harnessed via entanglement. Used in High-tech weapons, data networks.",
+        "tier": 3,
+        "base_price": 70
+    },
+    {
+        "id" : "zero-point_catalyst",
+        "name" : "Zero-Point Ctalyst",
+        "resource_icon": "assets/resources/T4_ENERGY.png",
+        "resource_type": "energy",
+        "description": "Energy drawn from vacuum fluctuations. Used in Megacity power, shield tech.",
+        "tier": 4,
+        "base_price": 150
+    },
+    {
+        "id" : "dark-energy_core",
+        "name" : "Dark-Energy Core",
+        "resource_icon": "assets/resources/T5_ENERGY.png",
+        "resource_type": "energy",
+        "description": "Compressed dark energy stabilized by quantum shells. Used in FTL drives, wormhole stabilizers.",
+        "tier": 5,
+        "base_price": 300
+    },
+    {
+        "id" : "stellar_heart",
+        "name" : "Stellar Heart",
+        "resource_icon": "assets/resources/T6_ENERGY.png",
+        "resource_type": "energy",
+        "description": "Direct harnessing of star cores or artificial suns. Used to powers Dyson spheres and in end-game megastructures.",
+        "tier": 6,
+        "base_price": 600
+    }
+]

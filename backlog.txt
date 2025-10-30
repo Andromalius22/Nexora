@@ -1,6 +1,5 @@
 --TO DO--
-finish resouces.json
-make map movement more reactive
+make map movement more reactive (?)
 rework the resources icons
 do refined icons
 finish refined items list
@@ -8,5 +7,21 @@ rework the colonization system
 include a random empire name generator
 patent will have an expiration date
 adding money/galactic credits
-options to remove slots
-add more options to planetary defense
+add more options to planetary defense (?)
+adding golden age dynamic
+weapons, amunitions, missiles 
+add galaxies type, age, forms
+custom buildings according to planet type 
+    algae farm for oceanic world
+
+optimize gif loading
+adding backup
+one log file per player
+auto upgrade all buildings in the empire. the game tell player total cost and time
+slot templates
+rework planet features bonus/malus
+if a player set self.selected_resource to farm, famr prod x2 (agri world)
+
+A faire demain
+    serialisation defenseunits
+    UI shipyard (voir testgui.py)

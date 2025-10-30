@@ -47,35 +47,35 @@
         "tier":6,
         "base_price":15
     },
-    "Raw Biomass":{
+    "Nutrient Gel":{
         "resource_icon":"assets/refined/T1_REFINED_BIOMASS.png",
         "refined_type":"biomass",
         "resources_needed":["Organifera"],
-        "description":"Processed organic material from flora, fauna, or microbial cultures. Can also be processed into gas",
+        "description":"Refined food substrate for colonies and growth vats",
         "tier":1,
         "base_price":15
     },
-    "Nutrient Gel":{
+    "BioComposite":{
         "resource_icon":"assets/refined/T2_REFINED_BIOMASS.png",
         "refined_type":"biomass",
-        "resources_needed":["Raw Biomass"],
-        "description":"Refined food substrate for colonies and growth vats.",
+        "resources_needed":["Organifera II"],
+        "description":"bioplastics / structural biofibers.",
         "tier":2,
         "base_price":15
     },
-    "Biopolymer":{
+    "Symbiotic-Enzyme":{
         "resource_icon":"assets/refined/T3_REFINED_BIOMASS.png",
         "refined_type":"biomass",
-        "resources_needed":["Organifera II"],
-        "description":"Refined organic chains; flexible and durable. Used in construction materials, clothing, organics industry.",
+        "resources_needed":["Symbiotic Culture"],
+        "description":"Used in Terraforming aids, biotech components.",
         "tier":3,
         "base_price":15
     },
-    "BioCatalyst":{
+    "Wetware Core":{
         "resource_icon":"assets/refined/T4_REFINED_BIOMASS.png",
         "refined_type":"biomass",
         "resources_needed":["Symbiotic Culture"],
-        "description":"Engineered enzyme networks that accelerate industrial or biological reactions.",
+        "description":"Used in AI cores, biological ships, psionic tech.",
         "tier":4,
         "base_price":15
     },

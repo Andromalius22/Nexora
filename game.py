@@ -8,6 +8,7 @@ from map import *
 from assetsmanager import *
 from world import *
 from ui import *
+from registry import *
 
 class Game:
     def __init__(self):
@@ -19,6 +20,7 @@ class Game:
         self.clock = pygame.time.Clock()
         self.redraw_tiles = True
         self.frame_count = 0
+        load_registry()
         self.map = GalaxyMap(MAP_WIDTH, HEIGHT)
         self.camera = Camera(screen_width=MAP_WIDTH, screen_height=SCREEN_HEIGHT, world_width=self.map.width, world_height=self.map.height)
         with open("resources.json") as f:
@@ -28,6 +30,7 @@ class Game:
         with open("refined.json") as f:
             refined_data = json.load(f)
         self.assets.load_resource_icons(refined_data)
+        self.assets.load_unit_icons()
         #load icons manually
         self.assets.load_image("mine_icon", "assets/icons/mine_cart.png")
         self.assets.load_image("farm_icon", "assets/icons/farm.png")
@@ -42,18 +45,19 @@ class Game:
         self.assets.load_image("plus_02_icon", "assets/icons/plus_02.png", size=(18, 18))
         self.assets.load_image("moins_icon", "assets/icons/moins.png", size=(18, 18))
         self.assets.load_image("hammer_icon", "assets/icons/hammer.png", size=(10, 10))
+        self.assets.load_image("credit_icon", "assets/icons/coin.png")
+        self.assets.load_image("defense_icon", "assets/icons/phased_shield.png")
 
         # Load planet type icons
-        with open("planet_types.json") as f:
-            planet_types_data = json.load(f)
-        self.assets.load_planets_icons(planet_types_data)
+        self.assets.load_planets_icons()
         self.tile_layer_surface = pygame.Surface((WIDTH, HEIGHT))
         self.notifications = NotificationManager(self.ui_manager, self.screen.get_rect())
         self.building_manager = BuildingManager()
-        self.tile_info_panel = TileInfoPanel(self.ui_manager, self.assets, pygame.Rect(SCREEN_WIDTH-300, 10, 300, 500), callback_on_planet_click=self.show_planet_panel)
+        self.tile_info_panel = TileInfoPanel(self.ui_manager, self.assets, pygame.Rect(SCREEN_WIDTH-300, 60, 300, 500), callback_on_planet_click=self.show_planet_panel)
         # Planet management panel on the left
-        self.planet_mgmt_panel = PlanetManagement(self.ui_manager, self.assets, pygame.Rect(10, 10, 280, 480), building_mgmt=self.building_manager, notifications_manager=self.notifications)
-        self.planet_slots_mgmt_panel = SlotsManagement(self.ui_manager, self.assets, pygame.Rect(290, 10, 280, 400), notifications_manager=self.notifications, building_mgmt=self.building_manager)
+        self.planet_mgmt_panel = PlanetManagement(self.ui_manager, self.assets, pygame.Rect(10, 60, 280, 480), building_mgmt=self.building_manager, notifications_manager=self.notifications)
+        self.planet_slots_mgmt_panel = SlotsManagement(self.ui_manager, self.assets, pygame.Rect(290, 60, 280, 400), notifications_manager=self.notifications, building_mgmt=self.building_manager)
+        self.planet_defense_mgmt_panel = PlanetaryDefenseManagement(self.ui_manager, self.assets, pygame.Rect(570, 60, 330, 300), notifications_manager=self.notifications)
         
         self.state = 'MAIN_MENU'
         
@@ -200,6 +204,7 @@ class Game:
     def show_planet_panel(self, planet):
         self.planet_mgmt_panel.show(planet, self.resource_data)
         self.planet_slots_mgmt_panel.show(planet)
+        self.planet_defense_mgmt_panel.show(planet)
 
     def run(self):
         while self.running:
@@ -307,17 +312,27 @@ class Game:
                 if self.tile_info_panel.visible:
                     self.tile_info_panel.handle_events(event)
                 if self.planet_mgmt_panel.panel.visible:
-                    self.planet_mgmt_panel.process_event(event, self.resource_data, self.tile_info_panel.selected_planet)
+                    self.planet_mgmt_panel.process_event(event, self.tile_info_panel.selected_planet)
                 if self.planet_slots_mgmt_panel.panel.visible:
                     self.planet_slots_mgmt_panel.process_events(event)
+                if self.planet_defense_mgmt_panel.panel.visible:
+                    self.planet_defense_mgmt_panel.process_event(event)
+                
+                # Determine if any panel is currently visible
+                any_panel_visible = (
+                    self.tile_info_panel.visible or
+                    self.planet_mgmt_panel.panel.visible or
+                    self.planet_slots_mgmt_panel.panel.visible or
+                    self.planet_defense_mgmt_panel.panel.visible
+                )
             
                 # Map click logic (only if mouse not over UI)
-                if event.type == pygame.MOUSEBUTTONDOWN and event.button == 1:
+                if not any_panel_visible and event.type == pygame.MOUSEBUTTONDOWN and event.button == 1:
                     mouse_pos = pygame.mouse.get_pos()
 
-                    # Skip map clicks if mouse over any UI element
-                    if self.ui_manager.get_hovering_any_element():
-                        continue  # Let pygame_gui handle it
+                    # # Skip map clicks if mouse over any UI element
+                    # if self.ui_manager.get_hovering_any_element():
+                    #     continue  # Let pygame_gui handle it
 
                     # Otherwise, process map click
                     center = (WIDTH // 2, HEIGHT // 2)
@@ -349,6 +364,9 @@ class Game:
                     if self.planet_slots_mgmt_panel.panel.visible:
                         self.planet_slots_mgmt_panel.panel.visible=False
                         self.planet_slots_mgmt_panel.hide()
+                    if self.planet_defense_mgmt_panel.panel.visible:
+                        self.planet_defense_mgmt_panel.panel.visible=False
+                        self.planet_defense_mgmt_panel.hide()
 
         keys = pygame.key.get_pressed()
         if self.camera.move(keys):
@@ -368,16 +386,15 @@ class Game:
             self.tile_info_panel.update_tooltips(mouse_pos)
             self.planet_mgmt_panel.update_tooltips(mouse_pos)
             self.planet_slots_mgmt_panel.update_tooltips(mouse_pos)
+            self.planet_defense_mgmt_panel.update_tooltips(mouse_pos)
             if self.time_since_last_second >= 1.0:  # one second passed
                 self.notifications.update()
                 for empire in self.empires:
                     for tile in empire.tiles_owned:
                         if tile.feature=='star_system':
                             for p in tile.contents.planets:
-                                finished_slots = p.progress_all_construction(p.get_total_industry_points())
-                                for slot in finished_slots:
-                                    # Optional: trigger UI update, log, or notifications
-                                    print(f"{slot.building.name} completed on {p.name}")
+                                p.update_build_queue(time_delta * p.industry_points, self.notifications)
+                                p.extract_resources()
                 self.time_since_last_second -= 1.0  # reset counter but keep any leftover
 
 
@@ -405,6 +422,7 @@ class Game:
             self.tile_info_panel.draw_tooltips(self.screen)
             self.planet_mgmt_panel.draw_tooltips(self.screen)
             self.planet_slots_mgmt_panel.draw_tooltips(self.screen)
+            self.planet_defense_mgmt_panel.draw_tooltips(self.screen)
         
         pygame.display.flip()
     

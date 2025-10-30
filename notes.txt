@@ -21,3 +21,65 @@ hyperfluids
 - Use: from assetsmanager import load_space_structures; structs = load_space_structures()
 - Each is returned as SpaceStructure class (see assetsmanager.py)
     
+Industry-per-defense for Ion Cannon = 500 industry / 80 defense_value = 6.25 industry per defense_value
+Basic Farm (T1 crop fields): 30 Organifera / min
+
+Hydroponic Farm (upgraded building): 60 Organifera / min
+
+Advanced Biofarm (high-tech, requires T2 raw): 12 Organifera II / min (produces T2 organics rather than T1)
+
+Symbiotic Vats (T3 production): 4 Symbiotic Culture / min
+
+Wetware Labs (T4 production): 1–2 Neural Biomass / min
+
+Example processing recipes and rates:
+
+Raw Organifera → Nutrient Gel: 5 Organifera → 3 Nutrient Gel, processing takes 1 min (i.e., a single processor converts 15 Organifera/min → 9 Nutrient Gel/min).
+
+Organifera II → BioComposite: 4 OII → 1 BioComposite / min (low-volume, higher value).
+
+Symbiotic Culture → BioCatalyst: 3 → 1 / min.
+
+Neural Biomass → Wetware Core: 10 → 1 every 2 min (very slow, high value).
+
+Measure performances issues :
+    import time
+    start = time.perf_counter()
+    for planet in player.planets:
+        planet.resources.apply_decay(delta_hours=1)
+    print("Decay tick:", time.perf_counter() - start)
+
+######################################################################################################################
+
+⚙️ Option 3 — Schedule tasks via asyncio.create_task
+
+For more dynamic systems (if you want to pause or reschedule), you can spawn periodic tasks:
+
+async def update_game_state(self):
+    asyncio.create_task(self._tick_builds())
+    asyncio.create_task(self._tick_resources())
+
+async def _tick_builds(self):
+    while True:
+        await asyncio.sleep(1)
+        # ...
+
+async def _tick_resources(self):
+    while True:
+        await asyncio.sleep(60)
+        # ...
+This is a bit more flexible if you ever need to restart or throttle subsystems dynamically (e.g. in response to load).
+
+########################################################################################################################
+If you want, I can also show a delta-saving approach, 
+where only modified galaxies are serialized per player — this reduces file size and write load for big galaxies
+########################################################################################################################
+from core.galaxy.galaxy_map import GalaxyMap
+from core.player import Player
+
+player = Player(id="local_001", name="Commander")
+galaxy = GalaxyMap.generate_for_player(player)
+########################################################################################################################
+GIF 
+Consider using sprite sheets for even better memory efficiency
+########################################################################################################################

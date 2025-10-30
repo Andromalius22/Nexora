@@ -1,0 +1,432 @@
+[
+    {
+        "id": "barren",
+        "name": "Barren World",
+        "category": "planet_type",
+        "description": "Rocky, airless world with rich mineral deposits",
+        "icon": "assets/planets/Barren_05-256x256.png",
+        "rarity": "common",
+        "possible_climates": ["sandstorm", "drought", "dry_winds"],
+        "defense_base_bonus": 1.1,
+
+        "environment": {
+            "temperature": "cold",
+            "atmosphere": "none",
+            "gravity": "normal",
+            "habitability": 0.3,
+            "surface":"telluric"
+        },
+
+        "bonuses": {
+            "resource": {
+            "ore": {
+                "tiers": [1, 2, 3],
+                "multiplier": 2.0,
+                "description": "100% bonus to T1–T3 ore yield"
+            }
+            },
+            "refining": {},
+            "defense": {
+            "multiplier": 1.2,
+            "description": "20% stronger ground and orbital defenses"
+            }
+        },
+        "colonization": {
+            "cost": {
+                "credits": 100,
+                "resources": { "Ore bars": 5 }
+            }
+        },
+        "tags": ["rocky", "ore-rich", "low-atmosphere", "planet"]
+    },
+    {
+        "id": "terrestrial",
+        "name": "Terrestrial World",
+        "category": "planet_type",
+        "description": "Earth-like planets good for colonization.",
+        "icon": "assets/planets/Terrestrial_05-256x256.png",
+        "rarity": "uncommon",
+        "possible_climates": ["temperate", "seasonal_storms", "dry_spell"],
+        "defense_base_bonus": 1.0,
+    
+        "environment": {
+          "temperature": "temperate",
+          "atmosphere": "breathable",
+          "gravity": "normal",
+          "habitability": 1.0,
+            "surface":"telluric"
+        },
+    
+        "bonuses": {
+          "resource": {
+            "ore": {
+              "tiers": [1, 2, 3],
+              "multiplier": 1.5,
+              "description": "50% bonus to T1–T3 ore yield"
+            },
+            "liquid": {
+              "tiers": [1, 2, 3],
+              "multiplier": 2.0,
+              "description": "100% bonus to T1–T3 liquid yield"
+            }
+          },
+          "refining": {},
+          "defense": {
+            "multiplier": 1.5,
+            "description": "50% stronger defense structures"
+          }
+        },
+    
+        "colonization": {
+          "cost": {
+            "credits": 100,
+            "resources": { "Ore bars": 5 }
+          },
+          "requirements": {
+            "tech": "Basic Colonization"
+          }
+        },
+    
+        "tags": ["habitable", "liquid-rich", "ore-yield"]
+    },
+    
+    {
+        "id": "volcanic",
+        "name": "Volcanic World",
+        "category": "planet_type",
+        "description": "Geologically active world with extreme temperatures.",
+        "icon": "assets/planets/Magma_05-256x256.png",
+        "rarity": "common",
+        "possible_climates": ["lava_rain", "toxic_fumes", "acid_storms"],
+        "defense_base_bonus": 1.5,
+    
+        "environment": {
+            "temperature": "extreme",
+            "atmosphere": "toxic",
+            "gravity": "high",
+            "habitability": 0.2,
+            "surface":"telluric"
+        },
+    
+        "bonuses": {
+          "resource": {
+            "ore": {
+              "tiers":[1, 2, 3, 4],
+              "multiplier": 0.5,
+              "description": "-50% to ore production"
+            }
+          },
+          "refining": {
+            "ore": {
+              "tiers": [1, 2, 3, 4],
+              "multiplier": 2.0,
+              "description": "100% bonus to T1–T4 ore refining"
+            }
+          },
+          "defense": {
+            "multiplier": 1.3,
+            "description": "30% stronger defense due to volcanic terrain"
+          }
+        },
+    
+        "colonization": {
+          "cost": {
+            "credits": 120,
+            "resources": { "Ore bars": 8, "Refined Volatite": 3 }
+          },
+          "requirements": {
+            "tech": "Extreme Environment Colonization"
+          }
+        },
+    
+        "tags": ["hostile", "refining", "ore-rich"]
+    },
+    
+    {
+        "id": "hydrogen_giant",
+        "name": "Hydrogen Giant",
+        "category": "planet_type",
+        "description": "Gas giant with hydrogen-rich atmosphere.",
+        "icon": "assets/planets/YellowGiant_05-256x256.png",
+        "rarity": "uncommon",
+        "possible_climates": ["megastorms", "ion_winds", "gas_turbulence"],
+        "defense_base_bonus": 1.3,
+    
+        "environment": {
+          "temperature": "cold",
+          "atmosphere": "hydrogen-rich",
+          "gravity": "very_high",
+          "habitability": 0.1,
+            "surface":"gas_giant"
+        },
+    
+        "bonuses": {
+          "resource": {
+            "gas": {
+              "tiers": [1, 2],
+              "multiplier": 1.4,
+              "description": "40% bonus to T1–T2 gas yield"
+            }
+          },
+          "refining": {},
+          "defense": {
+            "multiplier": 1.0
+          }
+        },
+    
+        "colonization": {
+          "cost": {
+            "credits": 200,
+            "resources": { "Ore bars": 10, "Ion Compound": 5 }
+          },
+          "requirements": {
+            "tech": "Gas Extraction"
+          }
+        },
+    
+        "tags": ["gas_giant", "hydrogen", "resource-rich"]
+    },
+    
+    {
+        "id": "ionized_giant",
+        "name": "Ionized Giant",
+        "category": "planet_type",
+        "description": "Gas giant with ionized atmosphere.",
+        "icon": "assets/planets/BlueGiant_05-256x256.png",
+        "rarity": "uncommon",
+        "possible_climates": ["plasma_storms", "magnetic_turbulence"],
+        "defense_base_bonus": 1.5,
+    
+        "environment": {
+          "temperature": "hot",
+          "atmosphere": "ionized",
+          "gravity": "very_high",
+          "habitability": 0.05,
+            "surface":"gas_giant"
+        },
+    
+        "bonuses": {
+          "resource": {
+            "gas": {
+              "tiers": [2, 3],
+              "multiplier": 1.2,
+              "description": "20% bonus to T2–T3 gas yield"
+            }
+          },
+          "refining": {
+            "gas": {
+              "tiers": [2, 3],
+              "multiplier": 1.2,
+              "description": "20% bonus to T2–T3 gas refining"
+            }
+          },
+          "defense": {
+            "multiplier": 1.1
+          }
+        },
+    
+        "colonization": {
+          "cost": {
+            "credits": 250,
+            "resources": { "Plasma Alloy": 8, "Ion Compound": 8 }
+          },
+          "requirements": {
+            "tech": "Ion Handling"
+          }
+        },
+    
+        "tags": ["gas_giant", "ionized", "energy-rich"]
+    },
+    
+    {
+        "id": "quantum_giant",
+        "name": "Quantum Giant",
+        "category": "planet_type",
+        "description": "Exotic gas giant with quantum field anomalies.",
+        "icon": "assets/planets/GreenGiant_05-256x256.png",
+        "rarity": "rare",
+        "possible_climates": ["quantum_flux", "reality_distortion"],
+        "defense_base_bonus": 1.7,
+    
+        "environment": {
+          "temperature": "exotic",
+          "atmosphere": "quantum",
+          "gravity": "very_high",
+          "habitability": 0.0,
+            "surface":"gas_giant"
+        },
+    
+        "bonuses": {
+          "resource": {
+            "gas": {
+              "tiers": [4, 5, 6],
+              "multiplier": 2.0,
+              "description": "100% bonus to T4–T6 gas yield"
+            }
+          },
+          "refining": {
+            "gas": {
+              "tiers": [4, 5, 6],
+              "multiplier": 1.4,
+              "description": "40% bonus to T4–T6 gas refining"
+            }
+          },
+          "defense": {
+            "multiplier": 1.0
+          }
+        },
+    
+        "colonization": {
+          "cost": {
+            "credits": 500,
+            "resources": { "Nanosteel": 15, "Plasma Core": 10 }
+          },
+          "requirements": {
+            "tech": "Quantum Containment"
+          }
+        },
+    
+        "tags": ["exotic", "quantum", "gas_giant"]
+    },
+    
+    {
+        "id": "oceanic",
+        "name": "Oceanic World",
+        "category": "planet_type",
+        "description": "Water world with abundant marine life.",
+        "icon": "assets/planets/Ocean_05-256x256.png",
+        "rarity": "uncommon",
+        "possible_climates": ["monsoon", "hurricane_season", "calm_currents"],
+        "defense_base_bonus": 0.8,
+    
+        "environment": {
+          "temperature": "temperate",
+          "atmosphere": "moist",
+          "gravity": "normal",
+          "habitability": 0.8,
+            "surface":"oceanic"
+        },
+    
+        "bonuses": {
+          "resource": {
+            "organics": {
+              "tiers": [1, 2],
+              "multiplier": 1.6,
+              "description": "60% bonus to T1–T2 organics yield"
+            }
+          },
+          "refining": {},
+          "defense": {
+            "multiplier": 1.1
+          }
+        },
+    
+        "colonization": {
+          "cost": {
+            "credits": 150,
+            "resources": { "Ore bars": 6, "Raw Biomass": 4 }
+          },
+          "requirements": {
+            "tech": "Aquatic Colonization"
+          }
+        },
+    
+        "tags": ["habitable", "liquid", "organic"]
+    },
+    
+    {
+        "id": "jungle",
+        "name": "Jungle World",
+        "category": "planet_type",
+        "description": "Dense forest world with complex ecosystems.",
+        "icon": "assets/planets/Lush_05-256x256.png",
+        "rarity": "uncommon",
+        "possible_climates": ["humid", "monsoon", "dense_fog"],
+        "defense_base_bonus": 1.3,
+    
+        "environment": {
+          "temperature": "warm",
+          "atmosphere": "dense",
+          "gravity": "normal",
+          "habitability": 0.9,
+            "surface":"telluric"
+        },
+    
+        "bonuses": {
+          "resource": {
+            "organics": {
+              "tiers": [2, 3],
+              "multiplier": 1.3,
+              "description": "30% bonus to T2–T3 organics yield"
+            }
+          },
+          "refining": {
+            "organics": {
+              "tiers": [2, 3],
+              "multiplier": 1.3,
+              "description": "30% bonus to T2–T3 organics refining"
+            }
+          },
+          "defense": {
+            "multiplier": 1.2
+          }
+        },
+    
+        "colonization": {
+          "cost": {
+            "credits": 180,
+            "resources": { "Biopolymer": 6, "Raw Biomass": 8 }
+          },
+          "requirements": {
+            "tech": "Jungle Adaptation"
+          }
+        },
+    
+        "tags": ["habitable", "organic-rich", "dense"]
+    },
+    
+    {
+        "id": "symbiotic",
+        "name": "Symbiotic World",
+        "category": "planet_type",
+        "description": "Rare world with interconnected biological networks.",
+        "icon": "assets/planets/Tropical_05-256x256.png",
+        "rarity": "very_rare",
+        "possible_climates": ["biospheric_balance", "mutual_growth", "spore_clouds"],
+        "defense_base_bonus": 2.0,
+    
+        "environment": {
+          "temperature": "warm",
+          "atmosphere": "bio-reactive",
+          "gravity": "normal",
+          "habitability": 1.0,
+            "surface":"telluric"
+        },
+    
+        "bonuses": {
+          "refining": {
+            "organics": {
+              "tiers": [4, 5, 6],
+              "multiplier": 1.5,
+              "description": "50% bonus to T4–T6 organics refining"
+            }
+          },
+          "defense": {
+            "multiplier": 1.4,
+            "description": "40% stronger defenses due to symbiotic flora"
+          }
+        },
+    
+        "colonization": {
+          "cost": {
+            "credits": 800,
+            "resources": { "Genetite": 20, "BioCatalyst": 15 }
+          },
+          "requirements": {
+            "tech": "Symbiotic Interface"
+          }
+        },
+    
+        "tags": ["rare", "organic", "symbiotic", "living_world"]
+    }
+]

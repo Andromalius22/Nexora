@@ -1,0 +1,351 @@
+{
+    "@default_progress_bar": {
+        "colours":
+        {
+            "filled_bar": "#3399FF",
+            "unfilled_bar": "#222222"
+        },
+        "misc":
+        {
+            "shape": "rounded_rectangle",
+            "shape_corner_radius" : "13"
+        }
+      },
+    "window": {
+        "colours":
+        {
+            "dark_bg":"#1E1E2F"
+        },
+        "misc": 
+        {
+            "border_width": 0,
+            "shape": "rounded_rectangle",
+            "shape_corner_radius" : "13",
+            "shadow_width": 10,
+            "title_bar_height": 30,
+            "title_bar_background_color": "#2B2B3C"
+        }
+    },
+    "#tile_info_panel": {
+        "colours":
+        {
+            "dark_bg": "#000000",
+            "normal_border": "#FFFF00"
+        },
+        "misc":
+        {
+            "shape":"rounded_rectangle",
+            "shape_corner_radius":"13",
+            "border_width":"4"
+        }
+    },
+    "#red_text": {
+        "colours":
+        {
+            "normal_text":"#FF0000"
+        }
+    },
+    "#green_text": {
+        "colours": 
+        {
+            "normal_text":"rgb(100, 255, 100)"
+        }
+    },
+    "@white_text": {
+        "colours": 
+        {
+            "normal_text":"#FFFFFF"
+        }
+    },
+    "@yellow_text": {
+        "colours": 
+        {
+            "normal_text": "#FFA500"
+        }
+    },
+    "@food_bar": {
+        "colours": {
+            "unfilled_bar": "#444444"
+        },
+        "misc":
+        {
+            "shape": "rounded_rectangle",
+            "shape_corner_radius" : "13"
+        }
+    },
+    "#internal_bar": {
+        "inherits": "@food_bar",
+        "colours": {
+            "filled_bar": "#00AA00"
+        }
+    },
+    "#export_bar": {
+        "inherits": "@food_bar",
+        "colours": {
+            "filled_bar": "#CC3333"
+        }
+    },
+    "#import_bar": {
+        "inherits": "@food_bar",
+        "colours": {
+            "filled_bar": "#FFD700"
+        }
+    },
+    "@small_font_label": {
+        "font":
+        {
+            "name": "LiberationMono",
+            "size": "10",
+            "regular_path": "assets/fonts/LiberationMono-Regular.ttf"
+        },
+        "misc":
+        {
+            "text_horiz_alignment": "left",
+            "text_vert_alignment": "center"
+        } 
+    },
+    "@left_label": {
+        "misc": 
+        {
+            "text_horiz_alignment":"left",
+            "text_vert_alignment":"top"
+        }
+    },
+    "@left_label_red":{
+        "colours": {
+            "normal_text":"#FF5555"
+        },
+        "misc": 
+        {
+            "text_horiz_alignment":"left",
+            "text_vert_alignment":"top"
+        }
+    },
+    "#in_game_panel_mother": {
+        "colours": 
+        {
+            "dark_bg":"#FFFFFF00"
+        }
+    },
+    "#spec_window":{
+        "misc":
+        {
+            "shape":"rounded_rectangle",
+            "shape_corner_radius":"13",
+            "enable_title_bar":"0"
+        }
+    },
+    "@research_button":{
+        "colours": 
+        {
+            "hovered_border":"rgb(255, 255, 0)"
+        },
+        "misc":
+        {
+            "shape":"rounded_rectangle"
+        }
+    },
+    "#overview_manager_button":{
+        "colours": 
+        {
+            "hovered_border":"rgb(255, 255, 0)"
+        }
+    },
+    "#star_system_overview_window":{
+        "misc":
+        {
+            "enable_title_bar":"0"
+        }
+    },
+    "@planet_icon": {
+        "colours": {
+            "normal_bg": "#00000000",
+            "hovered_bg": "#00000000",
+            "disabled_bg": "#00000000",
+            "selected_bg": "#00000000"
+        },
+        "misc": {
+            "border_width": "0",
+            "shape": "rectangle"
+        }
+    },
+    "@notification_label": {
+        "colours": {
+            "normal_text": "#00FF99",
+            "dark_bg": "#0A140F",
+            "normal_bg": "#0A140F",
+            "border": "#00FF99"
+        },
+        "misc": {
+            "shape": "rounded_rectangle",
+            "border_width": 2,
+            "shadow_width": 6,
+            "padding": 5
+        },
+        "font": {
+            "size": 18,
+            "name": "fira_code"
+        }
+    },
+    "@planet_mgmt_panel": {
+        "colours": {
+            "dark_bg" : "rgba(10, 10, 15, 150)",
+            "normal_border" : "rgb(80, 255, 100)"
+        },
+        "misc": {
+            "shape":"rounded_rectangle",
+            "shape_corner_radius":"7",
+            "shadow_width":2,
+            "border_width":"2"
+        }
+    },
+    "@resources_bonus_text_box": {
+        "colours": {
+            "dark_bg": "rgba(10, 10, 15, 150)",
+            "normal_border":"rgb(80, 255, 100)"
+        }
+    },
+    "@bonus_positive": {
+        "colours": {
+            "normal_text": "#00FF00"
+        },
+        "misc": 
+        {
+            "text_horiz_alignment":"left"
+        }
+    },
+    "@bonus_negative": {
+        "colours": {
+            "normal_text": "#FF4040"
+        },
+        "misc": 
+        {
+            "text_horiz_alignment":"left"
+        }
+    },
+    "@transparent_button": {
+        "colours": {
+            "normal_bg": "#00000000",
+            "hovered_bg": "#00000000",
+            "active_bg": "#00000000"
+        },
+        "misc": {
+            "border_width": 0
+        }
+            
+    },
+    "@planet_name_label": {
+        "font":
+        {
+            "name": "Spar",
+            "size": "24",
+            "regular_path": "assets/fonts/SparTakus.ttf"
+        },
+        "misc":
+        {
+            "text_horiz_alignment": "left",
+            "text_vert_alignment": "center"
+        } 
+    },
+    "@planet_name_label_18": {
+        "font":
+        {
+            "name": "Spar",
+            "size": "11",
+            "regular_path": "assets/fonts/SparTakus.ttf"
+        },
+        "misc":
+        {
+            "text_horiz_alignment": "left",
+            "text_vert_alignment": "center"
+        } 
+    },
+    "@Spar_font_label_10": {
+        "font":
+        {
+            "name": "Spar",
+            "size": "10",
+            "regular_path": "assets/fonts/SparTakus.ttf"
+        },
+        "misc":
+        {
+            "text_horiz_alignment": "left",
+            "text_vert_alignment": "top"
+        } 
+    },
+    "@Spar_font_label_8": {
+        "font":
+        {
+            "name": "Spar",
+            "size": "8",
+            "regular_path": "assets/fonts/SparTakus.ttf"
+        },
+        "misc":
+        {
+            "text_horiz_alignment": "left",
+            "text_vert_alignment": "top"
+        } 
+    },
+    "@Spar_font_label_15": {
+        "font":
+        {
+            "name": "Spar",
+            "size": "15",
+            "regular_path": "assets/fonts/SparTakus.ttf"
+        },
+        "misc":
+        {
+            "text_horiz_alignment": "left"
+        } 
+    },
+    "@build_button_defense": {
+        "colours": {
+            "normal_bg":"#0A140F",
+            "normal_border":"rgb(80, 255, 100)"
+        },
+        "misc": {
+            "shape":"rounded_rectangle"
+        }
+        
+    },
+    "@unit_button": {
+        "colours": {
+            "normal_bg":"#0A140F",
+            "normal_border":"rgb(51,57,21)"
+        },
+        "misc": {
+            "shape":"rounded_rectangle"
+        }
+    },
+    "@tool_tip": {
+    },
+
+    "@tool_tip.text_box": {
+            "colours": {
+                "dark_bg":"rgb(10, 10, 15)",
+                "normal_border":"rgb(80, 255, 100)"
+            },
+            "misc": {
+                "shape":"rounded_rectangle"
+            }
+    },
+    "@dropdown_units_layer_filter":{
+        "colours": {
+            "dark_bg":"rgba(10, 10, 15, 150)",
+            "normal_border":"rgb(80, 255, 100)",
+            "disabled_dark_bg":"rgba(10, 10, 15, 150)"
+        }
+    },
+    "@dropdown_units_layer_filter.#drop_down_options_list": {
+        "colours": {
+            "normal_bg": "#00000000",
+            "hovered_bg": "#00000000",
+            "active_bg": "#00000000"
+        },
+        "misc": {
+            "border_width": 0
+        }
+    }
+        
+}
+  

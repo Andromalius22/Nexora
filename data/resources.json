@@ -1,0 +1,245 @@
+[
+    {
+      "id": "basaltic_ore",
+      "name": "Basaltic Ore",
+      "category": "resource",
+      "resource_type": "ore",
+      "refinement_level": "raw",
+      "description": "Common rocky ore found on barren and volcanic worlds.",
+      "resource_icon": "assets/icons/ore.png",
+      "refines_to": "metal_bars",
+      "inputs": {},
+      "yield": 1.0,
+      "tags": ["raw", "mineral"]
+    },
+    {
+      "id": "metal_bars",
+      "name": "Metal Bars",
+      "category": "resource",
+      "resource_type": "ore",
+      "refinement_level": "processed",
+      "description": "Refined from ore; base component for structures and machinery.",
+      "resource_icon": "assets/resources/metal_bars.png",
+      "refines_to": "alloy",
+      "inputs": {
+        "basaltic_ore": 2,
+        "coolant": 0.2
+      },
+      "yield": 0.8,
+      "tags": ["processed", "industrial"]
+    },
+    {
+      "id": "alloy",
+      "name": "Alloy",
+      "category": "resource",
+      "resource_type": "ore",
+      "refinement_level": "advanced",
+      "description": "High-grade material used for ship hulls and orbital stations.",
+      "resource_icon": "assets/resources/alloy.png",
+      "refines_to": "quantum_alloy",
+      "inputs": {
+        "metal_bars": 2,
+        "plasma": 0.3
+      },
+      "yield": 0.5,
+      "tags": ["advanced", "construction"]
+    },
+    {
+      "id": "quantum_alloy",
+      "name": "Quantum Alloy",
+      "category": "resource",
+      "resource_type": "ore",
+      "refinement_level": "exotic",
+      "description": "Exotic nanostructured alloy used in quantum drives and high-energy reactors.",
+      "resource_icon": "assets/resources/quantum_alloy.png",
+      "refines_to": null,
+      "inputs": {
+        "alloy": 2,
+        "neural_symbionts": 0.1
+      },
+      "yield": 0.25,
+      "tags": ["exotic", "quantum"]
+    },
+    {
+      "id": "hydrogen_gas",
+      "name": "Hydrogen Gas",
+      "category": "resource",
+      "resource_type": "gas",
+      "refinement_level": "raw",
+      "description": "Abundant gas collected from giant planets or nebulae.",
+      "resource_icon": "assets/icons/gas.png",
+      "refines_to": "fuel",
+      "inputs": {},
+      "yield": 1.0,
+      "tags": ["raw", "volatile"]
+    },
+    {
+      "id": "fuel",
+      "name": "Fuel",
+      "category": "resource",
+      "resource_type": "gas",
+      "refinement_level": "processed",
+      "description": "Refined hydrogen used to power ships and industry.",
+      "resource_icon": "assets/resources/hydrogen_fuel.png",
+      "refines_to": "plasma",
+      "inputs": {
+        "hydrogen_gas": 2
+      },
+      "yield": 0.9,
+      "tags": ["processed", "energy"]
+    },
+    {
+      "id": "plasma",
+      "name": "Plasma",
+      "category": "resource",
+      "resource_type": "gas",
+      "refinement_level": "advanced",
+      "description": "Superheated ionized gas used in reactors and advanced forges.",
+      "resource_icon": "assets/resources/plasma.png",
+      "refines_to": "quantum_plasma",
+      "inputs": {
+        "fuel": 2,
+        "coolant": 0.3
+      },
+      "yield": 0.6,
+      "tags": ["advanced", "energy"]
+    },
+    {
+      "id": "quantum_plasma",
+      "name": "Quantum Plasma",
+      "category": "resource",
+      "resource_type": "gas",
+      "refinement_level": "exotic",
+      "description": "Energy-dense plasma stabilized with neural interfaces.",
+      "resource_icon": "assets/resources/quantum_plasma.png",
+      "refines_to": null,
+      "inputs": {
+        "plasma": 2,
+        "neural_symbionts": 0.1
+      },
+      "yield": 0.3,
+      "tags": ["exotic", "quantum"]
+    },
+    {
+      "id": "water_ice",
+      "name": "Water Ice",
+      "category": "resource",
+      "resource_type": "liquid",
+      "refinement_level": "raw",
+      "description": "Basic liquid compound found in asteroids, comets and planets",
+      "resource_icon": "assets/icons/liquid.png",
+      "refines_to": "coolant",
+      "inputs": {},
+      "yield": 1.0,
+      "tags": ["raw", "volatile"]
+    },
+    {
+      "id": "coolant",
+      "name": "Coolant",
+      "category": "resource",
+      "resource_type": "liquid",
+      "refinement_level": "processed",
+      "description": "Thermal management fluid for reactors and refineries.",
+      "resource_icon": "assets/icons/liquid.png",
+      "refines_to": "cryofluid",
+      "inputs": {
+        "water_ice": 2
+      },
+      "yield": 0.8,
+      "tags": ["processed", "industrial"]
+    },
+    {
+      "id": "cryofluid",
+      "name": "Cryofluid",
+      "category": "resource",
+      "resource_type": "liquid",
+      "refinement_level": "advanced",
+      "description": "Ultra-low-temperature liquid for quantum processors and plasma stabilization.",
+      "resource_icon": "assets/icons/liquid.png",
+      "refines_to": "dark_coolant",
+      "inputs": {
+        "coolant": 2,
+        "fuel": 0.5
+      },
+      "yield": 0.5,
+      "tags": ["advanced", "industrial"]
+    },
+    {
+      "id": "dark_coolant",
+      "name": "Dark Coolant",
+      "category": "resource",
+      "resource_type": "liquid",
+      "refinement_level": "exotic",
+      "description": "Exotic superfluid enabling dark-matter containment.",
+      "resource_icon": "assets/icons/liquid.png",
+      "refines_to": null,
+      "inputs": {
+        "cryofluid": 2,
+        "quantum_alloy": 0.2
+      },
+      "yield": 0.25,
+      "tags": ["exotic", "quantum"]
+    },
+    {
+      "id": "biomass",
+      "name": "Biomass",
+      "category": "resource",
+      "resource_type": "organic",
+      "refinement_level": "raw",
+      "description": "Basic organic matter harvested from life-bearing planets.",
+      "resource_icon": "assets/icons/organics.png",
+      "refines_to": "wetware",
+      "inputs": {},
+      "yield": 1.0,
+      "tags": ["raw", "biological"]
+    },
+    {
+      "id": "wetware",
+      "name": "Wetware",
+      "category": "resource",
+      "resource_type": "organic",
+      "refinement_level": "processed",
+      "description": "Organic computing substrate used in bio-circuits.",
+      "resource_icon": "assets/icons/organics.png",
+      "refines_to": "genetic_gel",
+      "inputs": {
+        "biomass": 2,
+        "metal_bars": 0.2
+      },
+      "yield": 0.7,
+      "tags": ["processed", "biological"]
+    },
+    {
+      "id": "genetic_gel",
+      "name": "Genetic Gel",
+      "category": "resource",
+      "resource_type": "organic",
+      "refinement_level": "advanced",
+      "description": "Bio-engineered medium for cloning and genetic processing.",
+      "resource_icon": "assets/icons/organics.png",
+      "refines_to": "neural_symbionts",
+      "inputs": {
+        "wetware": 2,
+        "cryofluid": 0.3
+      },
+      "yield": 0.5,
+      "tags": ["advanced", "biological"]
+    },
+    {
+      "id": "neural_symbionts",
+      "name": "Neural Symbionts",
+      "category": "resource",
+      "resource_type": "organic",
+      "refinement_level": "exotic",
+      "description": "Symbiotic bio-intelligences enabling quantum–biological control systems.",
+      "resource_icon": "assets/icons/organics.png",
+      "refines_to": null,
+      "inputs": {
+        "genetic_gel": 2,
+        "quantum_plasma": 0.1
+      },
+      "yield": 0.2,
+      "tags": ["exotic", "quantum", "biological"]
+    }
+  ]
+  

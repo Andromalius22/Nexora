@@ -2,6 +2,12 @@ import json
 import uuid
 import random
 import os
+import time
+from collections import deque
+from logger_setup import get_logger
+from registry import REGISTRY
+
+log = get_logger("World")
 
 class SpaceStructure:
     def __init__(self, id, name, hp, build_cost_credits, build_cost_resources, special_ability, description):
@@ -26,7 +32,7 @@ class SpaceStructure:
         )
 
 
-def load_space_structures(filepath="space_structures.json"):
+def load_space_structures(filepath="data/space_structures.json"):
     with open(filepath, "r") as f:
         data = json.load(f)
     return [SpaceStructure.from_dict(entry) for entry in data]
@@ -127,7 +133,8 @@ class Building:
     def __init__(self, key, name, cost, description, type_, slot_type,
                  resource_bonus=None, maintenance_cost=None,
                  defense_bonus=0.0, production_points=0,
-                 construction_priority=0):
+                 construction_priority=0, base_yield=1, max_per_planet=0, unique=False,
+                 tags=[]):
         self.key = key  # internal identifier, e.g., "farm"
         self.name = name
         self.cost = cost
@@ -139,6 +146,10 @@ class Building:
         self.defense_bonus = defense_bonus
         self.production_points = production_points
         self.construction_priority = construction_priority
+        self.base_yield = base_yield
+        self.max_per_planet = max_per_planet
+        self.unique = unique
+        self.tags = tags
 
         # Dynamic / runtime fields
         self.under_construction = False
@@ -174,20 +185,19 @@ class Building:
         return f"<Building {self.name} ({self.slot_type}) - {status}>"
 
 class BuildingManager:
-    def __init__(self, json_path="buildings.json"):
-        if not os.path.exists(json_path):
-            raise FileNotFoundError(f"{json_path} not found.")
-        with open(json_path, "r") as f:
-            self.buildings_data = json.load(f)
+    def __init__(self):
+        # No need to load JSON; use the registry
+        self.buildings_data = REGISTRY.get("buildings", {})
 
     def create_building(self, key):
         """
-        Instantiate a Building object from key in JSON.
+        Instantiate a Building object from the registry by key (id).
         """
         data = self.buildings_data.get(key)
         if not data:
-            raise KeyError(f"Building '{key}' not found in buildings.json")
-        
+            log.error(f"[BuildingManager] Building '{key}' not found in registry")
+            return None
+
         return Building(
             key=key,
             name=data["name"],
@@ -196,11 +206,16 @@ class BuildingManager:
             type_=data.get("type", ""),
             slot_type=data.get("slot_type", ""),
             resource_bonus=data.get("resource_bonus", {}),
-            maintenance_cost=data.get("maintenance_cost", {}),
-            defense_bonus=data.get("defense_bonus", 0.0),
+            maintenance_cost=data.get("upkeep", {}),
+            defense_bonus=data.get("defense_value", 0.0),
             production_points=data.get("production_points", 0),
-            construction_priority=data.get("construction_priority", 0)
+            construction_priority=data.get("construction_priority", 0),
+            base_yield=data.get("base_yield", 1),
+            max_per_planet=data.get("max_per_planet", 0),
+            unique=data.get("unique", False),
+            tags=data.get("tags", [])
         )
+
 
     def list_buildings(self):
         """
@@ -215,3 +230,43 @@ class BuildingManager:
         return {key: self.create_building(key) for key in self.buildings_data.keys()}
 
 ##############################################################################################################################
+
+class BuildOrder:
+    def __init__(self, item_name, build_time, cost, category, data, slot=None):
+        self.item_name = item_name
+        self.build_time = build_time
+        self.cost = cost
+        self.category = category  # "building" or "defense"
+        self.data = data  # raw registry entry
+        self.progress = 0
+        self.completed = False
+        self.slot = slot #Only used for category building
+
+    def update(self, delta_time):
+        self.progress += delta_time
+        if self.progress >= self.build_time:
+            self.completed = True
+            return True
+        return False
+
+
+class BuildQueue:
+    def __init__(self):
+        self.queue = []
+
+    def add_order(self, order: BuildOrder):
+        self.queue.append(order)
+
+    def update(self, delta_time):
+        """Advance the build queue and return completed item if any."""
+        if not self.queue:
+            return None
+
+        current = self.queue[0]
+        if current.update(delta_time):
+            self.queue.pop(0)
+            return current
+        return None
+
+    def get_all_orders(self):
+        return self.queue

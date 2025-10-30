@@ -5,13 +5,16 @@ import random
 import json
 from pygame.math import Vector2
 from world import *
+from defense import *
+from registry import *
+from config import *
+
+from logger_setup import *
+
+log = get_logger("Map")
 
 RESOURCE_TYPES = ["ore", "gas", "liquid", "organics"]
 SPECIAL_FEATURES = ["star_system", "nebula", "asteroid_field", "black_hole", "empty"]
-
-# Load planet types from external file
-with open("planet_types.json") as f:
-    PLANET_TYPES = json.load(f)
 
 # Helper: Load resource names by type
 with open("resources.json") as f:
@@ -74,17 +77,18 @@ class Planet:
         self.star_system = star_system
 
         # --- Planet type ---
-        self.planet_type = self.generate_planet_type()
-        planet_data = PLANET_TYPES[self.planet_type]
+        self.planet_type_id = self.generate_planet_type()
+        self.planet_type = REGISTRY["planets"][self.planet_type_id]
 
-        self.resource_bonus = planet_data.get("resource_bonus", {})
-        self.refine_bonus = planet_data.get("refine_bonus", {})
-        self.name_display = planet_data.get("name", self.planet_type.title())
-        self.description = planet_data.get("description", "")
-        self.rarity = planet_data.get("rarity", "common")
-        self.colonization_cost = planet_data.get("colonization_cost", {"credits": 100, "resources": {}})
-        self.habitability = planet_data.get("habitability", 0.5)
-        self.defense_bonus = planet_data.get("defense_bonus", 0.0)
+        self.bonuses = self.planet_type.get("bonuses", {})
+        self.resource_bonus = self.bonuses.get("resource", {})
+        self.refine_bonus = self.bonuses.get("refining", {})
+        self.defense_bonus = self.bonuses.get("defense", {})
+        self.name_display = self.planet_type.get("name", self.planet_type_id.title())
+        self.description = self.planet_type.get("description", "")
+        self.rarity = self.planet_type.get("rarity", "common")
+        self.colonization_cost = self.planet_type.get("colonization_cost", {"credits": 100, "resources": {}})
+        self.habitability = self.planet_type.get("habitability", 0.5)
 
         # --- Colonization / Resources ---
         self.current_resource_type = None
@@ -98,24 +102,107 @@ class Planet:
         self.slots = [Slot() for _ in range(self.population_max)]
 
         # --- Industry / Defense ---
-        self.industry_points = 10
+        self.industry_points = 1000
+        self.defense = PlanetDefense()
         self.defense_value = 0
 
         # --- Construction / Patents placeholders ---
         self.resource_mined = None
         self.resource_refined = None
 
+        # --- Build Queue ---
+        self.build_queue = BuildQueue()
+
+        # --- Statistics ---
+        self.statistics = {
+            "mine": 0.0,
+            "refine": 0.0,
+            "farm": 0.0,
+            "industry": 0.0,
+            "energy": 0.0
+        }
+        self._last_cache_signature = None  # for detecting slot/mode changes
+        self._resource_cache = {
+            "main": 0.0,
+            "farm": 0.0,
+            "total": 0.0,
+        }
+
+        self._cache_signatures = {
+            "main": None,
+            "farm": None,
+        }
+
+
+
     # ---------------- Name / Type ----------------
     def generate_name(self):
         return f"Planet-{random.randint(1000, 9999)}"
 
     def generate_planet_type(self):
+        planets = REGISTRY.get("planets", {})
+        # Safety: make sure registry actually has entries
+        if not planets:
+            log.error("[Planet] No planet types loaded in REGISTRY['planets']!")
+            # fallback to a generic terrestrial world
+            return "terrestrial"
+
         weights = {}
-        for planet_type, data in PLANET_TYPES.items():
-            rarity = data.get("rarity", "common")
-            weights_map = {"common": 0.25, "uncommon": 0.15, "rare": 0.05, "very_rare": 0.02}
-            weights[planet_type] = weights_map.get(rarity, 0.1)
-        return random.choices(list(weights.keys()), weights=list(weights.values()))[0]
+        weights_map = {
+            "common": 0.25,
+            "uncommon": 0.15,
+            "rare": 0.05,
+            "very_rare": 0.02
+        }
+
+        for planet_type_id, data in planets.items():
+            rarity = data.get("rarity", "common").lower()
+            weights[planet_type_id] = weights_map.get(rarity, 0.1)
+
+        # Safety: filter out any invalid or zero weights
+        valid_items = [(pid, w) for pid, w in weights.items() if w > 0]
+
+        if not valid_items:
+            log.error("[Planet] No valid planet type weights found — using fallback.")
+            return "terrestrial"
+
+        # Unzip into two lists for random.choices
+        planet_ids, probs = zip(*valid_items)
+        return random.choices(planet_ids, weights=probs, k=1)[0]
+    
+    # ---------------- Feature Helpers ----------------
+    def get_features_for_type(self):
+        return [
+            f for f in REGISTRY["planet_features"].values()
+            if f["planet_type"] == self.planet_type_id
+        ]
+
+    def assign_features(self, min_features=1, max_features=3, allow_negative=True):
+        available_features = self.get_features_for_type()
+        if not available_features:
+            return
+        if not allow_negative:
+            available_features = [
+                f for f in available_features
+                if not any(k.endswith("_penalty") for k in f.get("effects", {}))
+            ]
+
+        feature_count = random.randint(min_features, max_features)
+        self.features = random.sample(available_features, k=min(feature_count, len(available_features)))
+
+    def apply_feature_effects(self):
+        for f in self.features:
+            for stat, value in f.get("effects", {}).items():
+                if hasattr(self, stat):
+                    setattr(self, stat, getattr(self, stat) + value)
+                else:
+                    self.dynamic_effects[stat] = self.dynamic_effects.get(stat, 0) + value
+
+    # ---------------- Debug ----------------
+    def describe(self):
+        print(f"Planet type: {self.name_display}")
+        for f in self.features:
+            print(f"- {f['name']}: {f['description']}")
 
     # ---------------- Colonization ----------------
     def colonize(self, resource_type, resource_name, mode="mine"):
@@ -127,24 +214,19 @@ class Planet:
 
     # ---------------- Slots ----------------
     def get_available_slots(self):
-        return [s for s in self.slots if s.is_empty()]
+        """
+        Returns a list of free slots ready for construction.
+        """
+        available = []
+        for slot in self.slots:
+                # Skip occupied or under-construction slots
+                if not slot.is_empty() or slot.status in ("under_construction", "built"):
+                    continue
+                available.append(slot)
+        return available
 
     def get_used_slots(self):
         return [s for s in self.slots if not s.is_empty()]
-
-    def start_building_in_slot(self, building_key, building_manager, planet_industry_points):
-        for slot in self.get_available_slots():
-            building = building_manager.create_building(building_key)
-            slot.start_building(building, planet_industry_points)
-            return f"Started construction: {building.name}"
-        return f"No empty slot available to build {building_key.title()}"
-
-    def progress_all_construction(self, planet_industry_points):
-        finished_slots = []
-        for slot in self.get_used_slots():
-            if slot.progress_construction(planet_industry_points):
-                finished_slots.append(slot)
-        return finished_slots
     
     def remove_building_from_slot(self, building_type=None):
         """
@@ -185,91 +267,357 @@ class Planet:
         ]
 
     # ---------------- Resource Extraction ----------------
-    def extract_resources(self):
+    def extract_resources(self, force_recompute=False):
         if not self.is_colonized or not self.star_system:
-            return 0
+            return 0, 0
 
         owner = getattr(self.star_system.hextile, "owner", None)
-        if not owner or not self.current_resource:
-            return 0
-
+        if not owner:
+            return 0, 0
+        
+        # Ensure resource structures exist
+        self._resource_cache = getattr(self, "_resource_cache", {"main": 0.0, "farm": 0.0, "total": 0.0})
+        self._cache_signatures = getattr(self, "_cache_signatures", {"main": None, "farm": None})
+        self.statistics = getattr(self, "statistics", {"mine": 0.0, "refine": 0.0, "farm": 0.0})
+        
         tech_level = 1.0
-        total_yield = 0.0
         owner_patents = getattr(owner, "patents", [])
+        total_yield_main = 0.0
+        total_yield_farm = 0.0
 
-        # Mining Mode
-        if self.mode == "mine":
-            mine_count = len([s for s in self.slots if s.type == "mine" and s.status == "built"])
-            if mine_count <= 0:
-                return 0
-            total_yield = mine_count * tech_level * self.get_resource_yield_bonus()
-            total_yield = self.apply_patents(total_yield, owner_patents, target_type="mine")
+        base_yield = next((s.building.base_yield for s in self.slots if s.type == "mine"), 0)
+        tier_multiplier = TIER_YIELD_MULTIPLIERS.get(RESOURCES_DATA.get(self.current_resource, {}).get("tier", 1), 1.0)
 
-            owner.resources[self.current_resource] = owner.resources.get(self.current_resource, 0) + total_yield
-            self.resource_mined = self.current_resource
-            return total_yield
+        #we compute farm output first
+        # -----------------------------------------------
+        # 1. FARMING — always active but cached separately
+        # ----------------------------------------------- 
+        farm_signature = self._get_farm_signature()
+        if not force_recompute and farm_signature == self._cache_signatures["farm"]:
+            total_yield_farm = self._resource_cache["farm"]
+        else :
+            farm_count = len([s for s in self.slots if s.type == "farm" and s.status == "built" and s.active])
+            if farm_count > 0:
 
-        # Refining Mode
-        elif self.mode == "refine":
-            refine_count = len([s for s in self.slots if s.type == "refine" and s.status == "built"])
-            if refine_count <= 0:
-                return 0
-            total_yield = refine_count * tech_level * self.get_refine_bonus()
-            total_yield = self.apply_patents(total_yield, owner_patents, target_type="refine")
+                # Base yield per farm slot (you can define this elsewhere)
+                base_yield = next((s.building.base_yield for s in self.slots if s.type == "farm"), 1)
+                total_yield_farm = farm_count * base_yield * tech_level
+                total_yield_farm = self.apply_patents(total_yield_farm, owner_patents, target_type="organics")
 
-            # Consume resources and produce refined output
-            with open("refined.json") as f:
-                REFINED_DATA = json.load(f)
-            refined_info = REFINED_DATA.get(self.current_resource)
-            if not refined_info:
-                print(f"[WARN] {self.current_resource} not found in refined data.")
-                return 0
+                #later add farm tier ?
 
-            input_resources = refined_info.get("resources_needed", [])
-            if isinstance(input_resources, list):
-                input_resources = {res: 1 for res in input_resources}
+                #basic funtion for now
+                farm_resource = "Organifera"
+                owner.resources[farm_resource] = owner.resources.get(farm_resource, 0) + total_yield_farm
+                self.resource_farmed = farm_resource
+                self.statistics["farm"] = total_yield_farm
+            else :
+                #No farms active
+                total_yield_farm = 0
+                self.statistics["farm"] = total_yield_farm
+            self._resource_cache["farm"] = total_yield_farm
+            self._cache_signatures["farm"] = farm_signature
+        # ---------------------------
+        # 2. MAIN MODE (mine/refine)
+        # ---------------------------
+        main_signature = self._get_main_signature()
+        if not force_recompute and main_signature == self._cache_signatures["main"]:
+            total_yield_main = self._resource_cache["main"]
+        else :
+            if self.mode == "mine":
+                mine_count = len([s for s in self.slots if s.type == "mine" and s.status == "built"])
+                if mine_count > 0:
+                    total_yield_main = mine_count * tech_level * self.get_resource_yield_bonus() * base_yield * tier_multiplier
+                    total_yield_main = self.apply_patents(total_yield_main, owner_patents, target_type="mine")
 
-            for res_name, ratio in input_resources.items():
-                required = total_yield * ratio
-                if owner.resources.get(res_name, 0) < required:
-                    print(f"[INFO] Not enough {res_name} to refine {self.current_resource}")
-                    return 0
+                    owner.resources[self.current_resource] = owner.resources.get(self.current_resource, 0) + total_yield_main
+                    self.resource_mined = self.current_resource
+                    # Cache and record statistics
+                    self.statistics["mine"] = total_yield_main
+                    #return total_yield
 
-            for res_name, ratio in input_resources.items():
-                owner.resources[res_name] -= total_yield * ratio
+            # Refining Mode
+            elif self.mode == "refine":
+                refine_count = len([s for s in self.slots if s.type == "refine" and s.status == "built"])
+                if refine_count > 0:
+                    total_yield_main = refine_count * tech_level * self.get_refine_bonus()
+                    total_yield_main = self.apply_patents(total_yield_main, owner_patents, target_type="refine")
 
-            owner.resources[self.current_resource] = owner.resources.get(self.current_resource, 0) + total_yield
-            self.resource_refined = self.current_resource
-            return total_yield
+                    # Consume resources and produce refined output
+                    with open("refined.json") as f:
+                        REFINED_DATA = json.load(f)
+                    refined_info = REFINED_DATA.get(self.current_resource)
+                    if not refined_info:
+                        log.warning(f"{self.current_resource} not found in refined data.")
+                    
+                    else :
 
-        return 0
+                        input_resources = refined_info.get("resources_needed", [])
+                        if isinstance(input_resources, list):
+                            input_resources = {res: 1 for res in input_resources}
 
-    def apply_patents(self, yield_amount, patents, target_type):
-        resource_type = RESOURCES_DATA[self.current_resource]["resource_type"]
-        resource_tier = RESOURCES_DATA[self.current_resource]["tier"]
+                        for res_name, ratio in input_resources.items():
+                            required = total_yield_main * ratio
+                            if owner.resources.get(res_name, 0) < required:
+                                total_yield_main = 0 
+                                log.info(f"Not enough {res_name} to refine {self.current_resource}")
+                                break
+
+                        for res_name, ratio in input_resources.items():
+                            owner.resources[res_name] -= total_yield_main * ratio
+
+                        owner.resources[self.current_resource] = owner.resources.get(self.current_resource, 0) + total_yield_main
+                        self.resource_refined = self.current_resource
+                        self.statistics["refine"] = total_yield_main
+            self._resource_cache["main"] = total_yield_main
+            self._cache_signatures["main"] = main_signature
+
+
+        #  ------------------------------------------
+        # Combine both
+        # ------------------------------------------
+        total_yield = total_yield_main + total_yield_farm
+        self._resource_cache["total"] = total_yield
+        return total_yield_main, total_yield_farm
+
+    def apply_patents(self, yield_amount, patents, target_type, resource_name=None):
+        """
+        Applies patent bonuses to a given yield amount.
+
+        Args:
+            yield_amount (float): base yield before patents
+            patents (list): list of Patent objects
+            target_type (str): e.g. "mine", "refine", "organics"
+            resource_name (str, optional): overrides self.current_resource for special cases (e.g., farms)
+        """
+        # Use explicit resource if provided, otherwise fallback to planet’s current one
+        res_name = resource_name or getattr(self, "current_resource", None)
+        if not res_name or res_name not in RESOURCES_DATA:
+            log.warning(f"apply_patents: unknown resource '{res_name}'")
+            return yield_amount
+
+        res_data = RESOURCES_DATA[res_name]
+        resource_type = res_data.get("resource_type", "generic")
+        resource_tier = res_data.get("tier", 1)
+
         for patent in patents:
-            if patent.is_usable_by(self.star_system.hextile.owner) and patent.target_building_type == target_type:
+            if (
+                patent.is_usable_by(self.star_system.hextile.owner)
+                and patent.target_building_type == target_type
+            ):
                 yield_amount = patent.apply_bonus(yield_amount, resource_type, resource_tier)
+
         return yield_amount
+    
+    # ---------------- Build Queue ----------------
+
+    def start_build(self, item_id, building_manager=None):
+        """Start building anything (building or defense) by ID."""
+        categories_to_check = ["buildings", "defense_units"]
+
+        data = None
+        for cat in categories_to_check:
+            if item_id in REGISTRY.get(cat, {}):
+                data = REGISTRY[cat][item_id]
+                break
+
+        if not data:
+            log.warning(f"[Planet] {self.name}: Unknown build item '{item_id}'")
+            return "Unknown build item - see logs for more details"
+
+        cost = data.get("cost", {})
+        industry_cost=cost.get("industry", 1000)
+        build_time=(industry_cost/self.get_total_industry_points())*60
+        category = data.get("category", cat)
+
+        log.info(f"[Planet] {self.name}: Started building {data['name']} ({category})")
+
+        # ---------------- Buildings ----------------
+        if category=="building":
+            available_slots = self.get_available_slots()
+            if not available_slots:
+                return "No building slots available"
+            # Pick the first free slot
+            slot = available_slots[0]
+
+            # Create a new building object in construction
+            new_building = building_manager.create_building(data["id"])  # or key
+            if new_building:
+                new_building.status = "under_construction"
+
+            # Assign to the slot
+            slot.building = new_building
+            slot.status = "under_construction"
+            slot.type = slot.building.slot_type
+
+            # Queue the construction
+            order = BuildOrder(
+                item_name=data['name'],
+                build_time=build_time,
+                cost=cost,
+                category=category,
+                data=data,
+                slot=slot  # Store reference so we know where to finalize later
+            )
+            self.build_queue.add_order(order)
+            return f"{self.name}: Queued {data['name']} for construction."
+        # ---------------- Defense Units ----------------
+        else :
+            order = BuildOrder(
+                item_name=data['name'],
+                build_time=build_time,
+                cost=cost,
+                category=category,
+                data=data
+            )
+            self.build_queue.add_order(order)
+            return f"{self.name}: Queued {data['name']} (defense)"
+
+    def update_build_queue(self, delta_time, notification_mgmt=None):
+        completed = self.build_queue.update(delta_time)
+        if completed:
+            self.on_build_completed(completed, notification_mgmt)
+
+    def on_build_completed(self, order, notification_mgmt=None):
+        data = order.data
+
+        if order.category == "defense":
+            layer = DefenseLayer[data["layer"].upper()]
+            new_unit = DefenseUnit(
+                name=data["name"],
+                layer=layer,
+                defense_value=data["defense_value"],
+                upkeep=data["upkeep"],
+                power_use=data.get("power_use", 0)
+            )
+            self.defense.add_unit(new_unit)
+            notification_mgmt.show(f"Added {new_unit.name} to {self.name}")
+            log.info(f"[Defense] Added {new_unit.name} to {self.name}")
+
+        elif order.category == "building":
+            slot = getattr(order, "slot", None)
+            if slot and slot.building:
+                #slot.building.complete()
+                slot.status = "built"
+                
+                notification_mgmt.show(f"{slot.building.name} completed on {self.name}")
+                log.info(f"[Building] {slot.building.name} completed on {self.name}")
+            else:
+                log.warning(f"[Planet] {self.name}: Build completed but slot reference missing!")
 
     # ---------------- Bonuses ----------------
     def get_resource_yield_bonus(self):
+        # Default: no bonus
         if not self.is_colonized or not self.current_resource_type:
             return 1.0
-        bonus_data = self.resource_bonus.get(self.current_resource_type)
+
+        # Get the whole resource bonuses block safely
+        resource_bonuses = self.bonuses.get("resource", {})
+
+        # Check for a bonus matching the current resource type (e.g., "ore", "gas", etc.)
+        bonus_data = resource_bonuses.get(self.current_resource_type)
         if not bonus_data:
             return 1.0
-        tier = RESOURCES_DATA[self.current_resource]["tier"]
-        return bonus_data["multiplier"] if tier in bonus_data["tiers"] else 1.0
+
+        # Determine tier of the current resource
+        resource_info = RESOURCES_DATA.get(self.current_resource)
+        if not resource_info:
+            return 1.0
+
+        tier = resource_info.get("tier")
+        # Apply multiplier if the tier matches
+        return bonus_data["multiplier"] if tier in bonus_data.get("tiers", []) else 1.0
 
     def get_refine_bonus(self):
+        # Default: no bonus if uncolonized or no active resource
         if not self.is_colonized or not self.current_resource_type:
             return 1.0
-        bonus_data = self.refine_bonus.get(self.current_resource_type)
+
+        # Access refining bonuses safely
+        refining_bonuses = self.bonuses.get("refining", {})
+
+        # Get bonus data for this resource type (e.g., "biomass", "ore", etc.)
+        bonus_data = refining_bonuses.get(self.current_resource_type)
         if not bonus_data:
             return 1.0
-        tier = RESOURCES_DATA[self.current_resource]["tier"]
-        return bonus_data["multiplier"] if tier in bonus_data["tiers"] else 1.0
+
+        # Retrieve resource tier safely
+        resource_info = RESOURCES_DATA.get(self.current_resource)
+        if not resource_info:
+            return 1.0
+
+        tier = resource_info.get("tier")
+
+        # Apply multiplier only if tier matches the list
+        return bonus_data["multiplier"] if tier in bonus_data.get("tiers", []) else 1.0
+
+    def get_defense_bonus(self):
+        # Default multiplier: no bonus
+        if not self.is_colonized:
+            return 1.0
+
+        # Access defense bonuses safely
+        defense_bonus = self.bonuses.get("defense", {})
+
+        # Return its multiplier if present, else 1.0
+        return defense_bonus.get("multiplier", 1.0)
+    
+    # ---------------- Caching ----------------
+    def _get_cache_signature(self):
+        active_slots = [(s.type, s.status, s.active) for s in self.slots]
+        return (self.mode, self.current_resource, tuple(active_slots))
+    
+    def _get_main_signature(self):
+        """Cache key for mine/refine logic"""
+        relevant_slots = [(s.type, s.status, s.active) for s in self.slots if s.type in ("mine", "refine")]
+        return (self.mode, self.current_resource, tuple(relevant_slots))
+
+    def _get_farm_signature(self):
+        """Cache key for farming logic"""
+        farm_slots = [(s.type, s.status, s.active) for s in self.slots if s.type == "farm"]
+        return tuple(farm_slots)
+    
+    def on_slots_changed(self, slot_type=None, action=None):
+        """
+        Called whenever a slot is added, removed, activated, or deactivated.
+        Automatically invalidates cache and optionally refreshes production stats.
+
+        Args:
+            slot_type (str): type of slot affected ('mine', 'refine', 'farm', etc.)
+            action (str): optional, e.g. 'activate', 'deactivate', 'add', 'remove'
+        """
+        if not hasattr(self, "_resource_cache"):
+            self._resource_cache = {"main": 0.0, "farm": 0.0, "total": 0.0}
+        if not hasattr(self, "_cache_signatures"):
+            self._cache_signatures = {"main": None, "farm": None}
+
+        # ------------------------------------------
+        # 1️⃣ Invalidate relevant cache section
+        # ------------------------------------------
+        if slot_type in ("mine", "refine"):
+            # Invalidate main-mode cache
+            self._cache_signatures["main"] = None
+            self._resource_cache["main"] = 0.0
+            log.debug(f"[Planet:{self.name}] Main cache invalidated due to {slot_type} {action}.")
+        elif slot_type == "farm":
+            # Invalidate farm cache
+            self._cache_signatures["farm"] = None
+            self._resource_cache["farm"] = 0.0
+            log.debug(f"[Planet:{self.name}] Farm cache invalidated due to farm {action}.")
+        else:
+            # If slot_type not specified, clear everything
+            self._cache_signatures = {"main": None, "farm": None}
+            self._resource_cache = {"main": 0.0, "farm": 0.0, "total": 0.0}
+            log.debug(f"[Planet:{self.name}] All caches invalidated (unknown slot type).")
+
+    # ---------------- Statistics ----------------
+    def get_statistics(self):
+        return {
+            "mined_total": round(self.statistics["mine"], 2),
+            "refined_total": round(self.statistics["refine"], 2),
+            "farmed_total": round(self.statistics["farm"], 2),
+        }
+
 
     # ---------------- Representations ----------------
     def __repr__(self):
@@ -392,7 +740,6 @@ class GalaxyMap:
 
     def draw(self, surface, center, assets, frame_count, player, camera, current_empire):
         cam_offset = camera.get_offset() if camera else (0,0)
-        print(f"[MAP] cam_offset {cam_offset}")
         # Draw borders for all hexes
         for hex in self.grid:
             points = hex.polygon(center, config.HEX_SIZE, cam_offset)

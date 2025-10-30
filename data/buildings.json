@@ -1,0 +1,148 @@
+[
+
+    {
+        "id": "farm",
+        "name": "farm",
+        "category": "building",
+        "cost": {
+            "industry": 150,
+            "credits": 200
+        },
+        "description": "Produces food to support population growth.",
+        "type": "production",
+        "slot_type": "farm",
+        "resource_bonus": {
+            "population_growth": 0.1
+        },
+        "upkeep": {
+            "credits": 1
+        },
+        "defense_value": 0,
+        "production_points": 0,
+        "construction_priority": 1,
+        "base_yield":15,
+        "max_per_planet":0,
+        "unique": false,
+        "tags": ["economic", "population"]
+    },
+    {
+        "id": "mine",
+        "name": "mine",
+        "category": "building",
+        "cost": {
+            "industry": 300,
+            "credits": 300
+        },
+        "description": "Extracts raw resources from the planet.",
+        "type": "resource",
+        "slot_type": "mine",
+        "resource_bonus": {
+            "ore": 1.0,
+            "gas": 1.0
+        },
+        "upkeep": {
+            "credits": 1
+        },
+        "defense_value": 0,
+        "production_points": 0,
+        "construction_priority": 2,
+        "base_yield":10,
+        "max_per_planet":0,
+        "unique": false,
+        "tags": ["economic", "resources"]
+    },
+    {
+        "id": "refine",
+        "name": "refine",
+        "category": "building",
+        "cost": {
+            "industry": 800,
+            "credits": 150
+        },
+        "description": "Processes raw resources into refined materials.",
+        "type": "resource",
+        "slot_type": "refine",
+        "resource_bonus": {
+            "refined_materials": 1.0
+        },
+        "upkeep": {
+            "credits": 1.5
+        },
+        "defense_value": 0,
+        "production_points": 0,
+        "construction_priority": 5,
+        "max_per_planet":0,
+        "unique": false,
+        "tags": ["economic", "resources"]
+    },
+    {
+        "id": "industry",
+        "name": "industry",
+        "category": "building",
+        "cost": {
+            "industry": 1000,
+            "credits": 600
+        },
+        "description": "Generates industry points for building other structures.",
+        "type": "production",
+        "slot_type": "industry",
+        "resource_bonus": {},
+        "upkeep": {
+            "credits": 2
+        },
+        "defense_value": 0,
+        "production_points": 100,
+        "construction_priority": 3,
+        "max_per_planet":0,
+        "unique": false,
+        "tags": ["economic", "industry"]
+    },
+    {
+        "id": "energy",
+        "name": "energy",
+        "category": "building",
+        "cost": {
+            "industry": 1200,
+            "credits": 200
+        },
+        "description": "Produce energy.",
+        "type": "production",
+        "slot_type": "energy",
+        "resource_bonus": {},
+        "upkeep": {
+            "credits": 0.5
+        },
+        "defense_value": 0,
+        "production_points": 0,
+        "construction_priority": 4,
+        "base_yield":10,
+        "max_per_planet":0,
+        "unique": false,
+        "tags": ["economic", "population", "energy"]
+    },
+    {
+        "id": "lab",
+        "name": "laboratory",
+        "category": "building",
+        "cost": {
+            "industry": 250,
+            "credits": 600,
+            "metal_bars":20
+        },
+        "description": "Produces science.",
+        "type": "production",
+        "slot_type": "science",
+        "resource_bonus": "None",
+        "upkeep": {
+            "credits": 3
+        },
+        "defense_value": 0,
+        "production_points": 0,
+        "construction_priority": 6,
+        "base_yield":7,
+        "max_per_planet":0,
+        "unique": false,
+        "tags": ["economic", "science"]
+    }
+
+]

@@ -1,3 +1,5 @@
+from collections import defaultdict
+
 class Player:
     """A player can mange multiples empires aka if he lost, he can restart with some tech learned, for instance"""
     def __init__(self):
@@ -14,4 +16,4 @@ class Empire:
         self.home_tile=None
         self.tiles_owned = set()
         self.army = []
-        self.resources = []
+        self.resources = defaultdict(float)

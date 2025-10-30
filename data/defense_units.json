@@ -1,0 +1,137 @@
+[
+    {
+      "id": "ion_cannon",
+      "name": "Ion Cannon",
+      "category": "defense",
+      "layer": "ORBITAL",
+      "icon": "assets/units/ion_canon.webp",
+      "description": "Heavy cannon for planetary defense.\n Used to fight against orbital bombardments",
+      "stats": {
+        "offense": 5,
+        "defense": 80,
+        "hp": 200
+      },
+      "upkeep": {
+            "credits": 2
+        },
+      "power_use": 1,
+      "cost": {
+        "industry": 500,
+        "credits": 200,
+        "resources": {
+          "alloy":50
+        }
+        
+      },
+      "storage_space":1500,
+      "tags": ["orbital", "defense", "energy"]
+    },
+    {
+      "id": "gauss_cannon",
+      "name": "Gauss Cannon",
+      "category": "defense",
+      "layer": "LOW_ALTITUDE",
+      "icon": "assets/units/gauss_canon.jpg",
+      "description": "Heavy cannon for planetary defense, usefull in close combat.",
+      "stats": {
+        "offense": 5,
+        "defense": 60,
+        "hp": 110
+      },
+      "upkeep": {
+            "credits": 3
+        },
+      "power_use": 2,
+      "cost": {
+        "industry": 313,
+        "credits": 125,
+        "resources": {
+          "alloy":30
+        }
+      },
+      "storage_space":500,
+      "tags": ["orbital", "defense", "energy"]
+    },
+    {
+      "id": "hight-altitude_interceptor",
+      "name": "High-Altitude Interceptor",
+      "category": "defense",
+      "layer": "HIGH_ALTITUDE",
+      "icon": "assets/units/Interceptor.png",
+      "description": "Used against early enemy attempts to invade.",
+      "stats": {
+        "offense": 10,
+        "defense": 40,
+        "hp": 90
+      },
+      "upkeep": {
+            "credits": 1.5
+        },
+      "power_use": 0.5,
+      "cost": {
+        "industry": 250,
+        "credits": 100,
+        "resources": {
+          "metal_bars":15
+        }
+      },
+      "storage_space":1000,
+      "tags": ["atmospheric", "defense", "energy"]
+    },
+    {
+      "id": "planetary_garrison",
+      "name": "Planetary Garrison",
+      "category": "defense",
+      "layer": "GROUND",
+      "icon": "assets/units/planetary_garrison.png",
+      "description": "Used in last resort against enemy invasions.",
+      "upkeep": {
+            "credits": 1
+        },
+      "power_use": 0,
+      "cost": {
+        "industry": 375,
+        "credits": 150,
+        "resources": {
+          "metal_bars":20
+        }
+      },
+      "stats": {
+        "offense": 50,
+        "defense": 60,
+        "hp": 200
+      },
+      "storage_space":2000,
+      "tags": ["ground", "defense", "energy"]
+    },
+    {
+      "id": "little_shield",
+      "name": "Little planetary shield",
+      "category": "defense",
+      "layer": "GROUND",
+      "icon": "assets/units/planetary_little_shield.jpg",
+      "description": "Protect small important areas.",
+      "upkeep": {
+            "credits": 4
+        },
+      "power_use": 10,
+      "cost": {
+        "industry": 1500,
+        "credits": 450,
+        "resources": {
+          "metal_bars":80,
+          "alloy":10,
+          "plasma":10,
+          "coolant":10
+        }
+      },
+      "stats": {
+        "offense": 0,
+        "defense": 1000,
+        "hp": 1000
+      },
+      "storage_space":5000,
+      "tags": ["ground", "defense", "energy"]
+    }
+  ]
+  
